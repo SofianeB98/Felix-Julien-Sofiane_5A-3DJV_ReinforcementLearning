@@ -5,8 +5,8 @@ using UnityEngine;
 /*
  * List d'action
  * coeff de reduction => gamma
- * ensemble d'état
- * Reward appliqué en passant d'un état à l'autre grace a une action
+ * ensemble d'ï¿½tat
+ * Reward appliquï¿½ en passant d'un ï¿½tat ï¿½ l'autre grace a une action
  *
  * Un agent
  * PolicyEvaluation()
@@ -67,18 +67,18 @@ public class Agent
         this.actions = availableActions;
         this.actualState = startState;
         this.targetState = targetState;
+
+        
     }
 }
 
-public class Action
+[System.Serializable]
+public abstract class Action
 {
     public string actionName;
     public float actionProbability;
 
-    public void Perform()
-    {
-
-    }
+    public abstract void Perform(Agent agent, GridParameter gridParams, GridWorld env);
 }
 
 public class GridWorld : MonoBehaviour
@@ -158,9 +158,9 @@ public class GridWorld : MonoBehaviour
 
         grid[gridParameter.targetState.x, gridParameter.targetState.y].visual.GetComponent<Renderer>().material.color = Color.green;
 
-        // Création des obstacles
+        // Crï¿½ation des obstacles
 
-        // Création des Bonus
+        // Crï¿½ation des Bonus
 
         // Setup de la camera
         cam.transform.position = new Vector3(gridParameter.gridSize.x * 0.5f, gridParameter.gridSize.y * 0.5f, -5);
@@ -170,7 +170,13 @@ public class GridWorld : MonoBehaviour
 
     private void InitAgent()
     {
-        this.agent.Init(new List<Action>(), gridParameter.startState, gridParameter.targetState, 0.9f);
+        var actions = new List<Action>();
+        actions.Add(new MoveAction(new Vector2Int(1, 0)));
+        actions.Add(new MoveAction(new Vector2Int(-1, 0)));
+        actions.Add(new MoveAction(new Vector2Int(0, 1)));
+        actions.Add(new MoveAction(new Vector2Int(0, -1)));
+        this.agent.Init(actions, gridParameter.startState, grid[0,0].position, 0.9f);
+
         this.agent.visual = Instantiate(agentPrefab, new Vector3(this.agent.actualState.x, this.agent.actualState.y, 0.0f), Quaternion.identity);
     }
 }
