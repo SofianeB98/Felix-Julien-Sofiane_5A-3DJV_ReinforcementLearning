@@ -31,6 +31,8 @@ public class GridCell
     public GridState state;
 
     public GameObject visual;
+
+    public float r;
 }
 
 [System.Serializable]
@@ -39,7 +41,9 @@ public class GridParameter
     public Vector2Int gridSize;
     public GameObject gridCellPrefab;
     public int unwalkableCellCount = 1;
+    public int bonusCount = 1;
     public Vector2Int startState;
+    public Vector2Int targetState;
 }
 
 [System.Serializable]
@@ -50,6 +54,7 @@ public class Agent
     public Vector2Int actualState;
     public Vector2Int targetState;
 
+    public GameObject visual;
 
     public float gamma;
 
@@ -80,6 +85,8 @@ public class GridWorld : MonoBehaviour
 {
     public GridParameter gridParameter;
     public GridCell[,] grid; // = tout les etats
+
+    public GameObject agentPrefab;
     public Agent agent;
 
     public Transform gridParent;
@@ -88,12 +95,11 @@ public class GridWorld : MonoBehaviour
 
     private void Start()
     {
-        if (gridParameter.gridSize.x == 0 || gridParameter.gridSize.y == 0)
+        if ((gridParameter.gridSize.x == 0 || gridParameter.gridSize.y == 0) ||
+            (gridParameter.gridSize.x == 1 && gridParameter.gridSize.y == 1))
         {
             gridParameter.gridSize = new Vector2Int(3, 3);
         }
-
-
 
         InitGrid();
         InitAgent();
@@ -101,6 +107,7 @@ public class GridWorld : MonoBehaviour
 
     private void InitGrid()
     {
+        // Initialisation de la grid
         grid = new GridCell[gridParameter.gridSize.x, gridParameter.gridSize.y];
 
         for (int i = 0; i < gridParameter.gridSize.x; i++)
@@ -117,9 +124,45 @@ public class GridWorld : MonoBehaviour
                     Quaternion.identity);
 
                 grid[i, j].visual.transform.SetParent(gridParent);
+
+                switch (grid[i,j].state)
+                {
+                    case GridCell.GridState.Unwalkable:
+                        grid[i, j].r = -1000.0f;
+                        break;
+
+                    case GridCell.GridState.Start:
+                    case GridCell.GridState.Walkable:
+                        grid[i, j].r = -1.0f;
+                        break;
+
+                    case GridCell.GridState.Stars:
+                        grid[i, j].r = 10.0f;
+                        break;
+
+                    case GridCell.GridState.End:
+                        grid[i, j].r = 1000.0f;
+                        break;
+                }
             }
         }
 
+        // Definition du start state & de l'end state
+        gridParameter.startState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
+
+        gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
+
+        if(gridParameter.targetState.Equals(gridParameter.startState))
+            while(gridParameter.targetState.Equals(gridParameter.startState))
+                gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
+
+        grid[gridParameter.targetState.x, gridParameter.targetState.y].visual.GetComponent<Renderer>().material.color = Color.green;
+
+        // Création des obstacles
+
+        // Création des Bonus
+
+        // Setup de la camera
         cam.transform.position = new Vector3(gridParameter.gridSize.x * 0.5f, gridParameter.gridSize.y * 0.5f, -5);
         cam.orthographic = true;
         cam.orthographicSize = ((gridParameter.gridSize.x + gridParameter.gridSize.y) * 0.5f + 5f) * 0.5f;
@@ -127,7 +170,8 @@ public class GridWorld : MonoBehaviour
 
     private void InitAgent()
     {
-        this.agent.Init(new List<Action>(), gridParameter.startState, grid[0,0].position, 0.9f);
+        this.agent.Init(new List<Action>(), gridParameter.startState, gridParameter.targetState, 0.9f);
+        this.agent.visual = Instantiate(agentPrefab, new Vector3(this.agent.actualState.x, this.agent.actualState.y, 0.0f), Quaternion.identity);
     }
 }
 

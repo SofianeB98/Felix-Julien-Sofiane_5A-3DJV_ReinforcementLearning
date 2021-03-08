@@ -329,10 +329,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridParameter:
-    gridSize: {x: 3, y: 3}
+    gridSize: {x: 6, y: 6}
     gridCellPrefab: {fileID: 8956055984983367981, guid: 66a75f85a2fa3484c96a622450a3cc7c, type: 3}
     unwalkableCellCount: 1
+    bonusCount: 1
     startState: {x: 0, y: 0}
+    targetState: {x: 0, y: 0}
   agent:
     actualState: {x: 0, y: 0}
     targetState: {x: 0, y: 0}
