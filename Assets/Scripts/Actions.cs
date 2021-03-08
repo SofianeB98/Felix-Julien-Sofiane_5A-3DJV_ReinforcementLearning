@@ -1,6 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+
+[System.Serializable]
+public abstract class Action
+{
+    public string actionName;
+    public float actionProbability;
+
+    public abstract void Perform(Agent agent, GridParameter gridParams, GridWorld env);
+}
 
 [System.Serializable]
 public class MoveAction : Action 
@@ -12,7 +19,7 @@ public class MoveAction : Action
         this.direction = direction;
     }
 
-    bool OutOfGridBound(Vector2Int newPos, ref GridParameter gridParams)
+    public bool OutOfGridBound(Vector2Int newPos, ref GridParameter gridParams)
     {
         if(newPos.x < 0 || newPos.x > gridParams.gridSize.x - 1
             || newPos.y < 0 || newPos.y > gridParams.gridSize.y - 1)

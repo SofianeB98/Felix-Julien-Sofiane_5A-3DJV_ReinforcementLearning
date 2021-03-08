@@ -329,18 +329,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridParameter:
-    gridSize: {x: 6, y: 6}
+    gridSize: {x: 5, y: 5}
     gridCellPrefab: {fileID: 8956055984983367981, guid: 66a75f85a2fa3484c96a622450a3cc7c, type: 3}
     unwalkableCellCount: 1
     bonusCount: 1
     startState: {x: 0, y: 0}
     targetState: {x: 0, y: 0}
+  gridParent: {fileID: 1141487546}
+  agentPrefab: {fileID: 7118079960431714812, guid: f21c66e73c9e3d34ca0294103c2cd6ce, type: 3}
   agent:
     actualState: {x: 0, y: 0}
     targetState: {x: 0, y: 0}
+    visual: {fileID: 0}
     gamma: 0.9
+    theta: 0.005
     reward: 0
-  gridParent: {fileID: 1141487546}
+  stepTime: 1
   cam: {fileID: 963194227}
 --- !u!4 &1141487546
 Transform:
