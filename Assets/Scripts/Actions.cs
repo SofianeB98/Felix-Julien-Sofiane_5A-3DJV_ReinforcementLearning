@@ -30,19 +30,3 @@ public class MoveAction : Action
         agent.actualState = newPos;
     }
 }
-
-public class MoveDownAction : Action
-{
-    public override void Perform(Agent agent, GridParameter gridParams, GridWorld env)
-    {
-        if (agent.actualState.y == 0)
-        {
-            return;
-        }
-        if (env.grid[agent.actualState.x, agent.actualState.y - 1].state != GridCell.GridState.Walkable)
-        {
-            return;
-        }
-        agent.actualState += new Vector2Int(0, -1);
-    }
-}
