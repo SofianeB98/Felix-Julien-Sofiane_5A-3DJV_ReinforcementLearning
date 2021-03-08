@@ -329,9 +329,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridParameter:
-    gridSize: {x: 5, y: 5}
+    gridSize: {x: 10, y: 10}
     gridCellPrefab: {fileID: 8956055984983367981, guid: 66a75f85a2fa3484c96a622450a3cc7c, type: 3}
-    unwalkableCellCount: 1
+    unwalkableCellCount: 5
     bonusCount: 1
     startState: {x: 0, y: 0}
     targetState: {x: 0, y: 0}
@@ -344,7 +344,7 @@ MonoBehaviour:
     gamma: 0.9
     theta: 0.005
     reward: 0
-  stepTime: 1
+  stepTime: 0.1
   cam: {fileID: 963194227}
 --- !u!4 &1141487546
 Transform:

@@ -4,7 +4,6 @@ using UnityEngine;
 public abstract class Action
 {
     public string actionName;
-    public float actionProbability;
 
     public abstract void Perform(Agent agent, GridParameter gridParams, GridWorld env);
 }
@@ -14,8 +13,9 @@ public class MoveAction : Action
 {
     public readonly Vector2Int direction;
 
-    public MoveAction(Vector2Int direction) 
+    public MoveAction(Vector2Int direction, string name)
     {
+        this.actionName = name;
         this.direction = direction;
     }
 
@@ -23,9 +23,9 @@ public class MoveAction : Action
     {
         if(newPos.x < 0 || newPos.x > gridParams.gridSize.x - 1
             || newPos.y < 0 || newPos.y > gridParams.gridSize.y - 1)
-        {
             return true;
-        }
+        
+
         return false;
     }
 

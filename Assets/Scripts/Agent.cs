@@ -27,24 +27,30 @@ public class Agent
 
         this.theta = 0.005f;
 
-        InitializePolicy();
+        InitializeRandomPolicy();
     }
 
-    public void InitializePolicy()
+    public void InitializeRandomPolicy()
     {
         //On initiase la policy avec du RDM
         policy = new Dictionary<Vector2Int, Action>();
         foreach (var key in actions.Keys)
         {
-            policy.Add(key, actions[key][Random.Range(0, actions[key].Count)]);
+            if(actions[key].Count > 0)
+                policy.Add(key, actions[key][Random.Range(0, actions[key].Count)]);
+            else
+                policy.Add(key, null);
         }
     }
 
     public void PolicyEvaluation(ref GridCell[,] allStates)
     {
         float delta = 0.0f;
-        while (delta < theta)
+        int iteration = 0;
+        while (delta < theta && iteration < 1)
         {
+            iteration++;
+
             // Pour chaque s in S
             for (int i = 0; i < allStates.GetLength(0); i++)
             {
@@ -57,20 +63,20 @@ public class Agent
 
                     //Perform une action
                     var moveAct = policy[allStates[i, j].position] as MoveAction;
-                    var nxt = allStates[i, j].position + moveAct.direction;
 
-                    allStates[i, j].v = allStates[nxt.x, nxt.y].r + gamma * allStates[nxt.x, nxt.y].v;
+                    if (moveAct != null)
+                    {
+                        var nxt = allStates[i, j].position + moveAct.direction;
+
+                        allStates[i, j].v = allStates[nxt.x, nxt.y].r + gamma * allStates[nxt.x, nxt.y].v;
+                    }
 
                     delta = Mathf.Max(delta, Mathf.Abs(tmp - allStates[i, j].v));
-
-                    if (delta > theta)
-                        break;
                 }
-
-                if (delta > theta)
-                    break;
             }
         }
+
+        DisplayDirection(ref allStates);
     }
 
     public void PolicyImprovement(ref GridCell[,] allStates)
@@ -87,16 +93,16 @@ public class Agent
 
                 // Je cherche la meilleure action
                 float tmp = allStates[i, j].v;
-                float newV = 0.0f;
+                float maxV = 0.0f;
                 foreach (var act in actions[allStates[i, j].position])
                 {
                     var moveAct = act as MoveAction;
                     var nxt = allStates[i, j].position + moveAct.direction;
 
-                    newV = allStates[nxt.x, nxt.y].r + gamma * allStates[nxt.x, nxt.y].v;
-                    if (newV > tmp)
+                    maxV = allStates[nxt.x, nxt.y].r + gamma * allStates[nxt.x, nxt.y].v;
+                    if (maxV > allStates[i, j].v)
                     {
-                        allStates[i, j].v = newV;
+                        allStates[i, j].v = maxV;
                         policy[allStates[i, j].position] = act;
                     }
                 }
@@ -119,7 +125,7 @@ public class Agent
     {
         float delta = 0.0f;
         int iteration = 0;
-        while (delta < theta && iteration < 100000)
+        while (delta < theta && iteration < 1000000)
         {
             iteration++;
 
@@ -131,33 +137,41 @@ public class Agent
                         continue;
 
                     float tmp = allStates[i, j].v;
-
-                    var tmpState = allStates[i, j].position;
+                    float maxV = float.MinValue;
 
                     //Perform une action
-                    foreach (var act in actions[tmpState])
+                    foreach (var act in actions[allStates[i, j].position])
                     {
                         var moveAct = act as MoveAction;
                         var nxt = allStates[i, j].position + moveAct.direction;
 
-                        float newV = allStates[nxt.x, nxt.y].r + gamma * allStates[nxt.x, nxt.y].v;
-                        if (newV > allStates[i, j].v)
+                        float v = allStates[nxt.x, nxt.y].r + gamma * allStates[nxt.x, nxt.y].v;
+                        if (v > maxV)
                         {
-                            allStates[i, j].v = newV;
+                            maxV = v;
                             policy[allStates[i, j].position] = act;
                         }
                     }
 
+                    allStates[i, j].v = maxV.Equals(float.MinValue) ? 0.0f : maxV;
                     delta = Mathf.Max(delta, Mathf.Abs(tmp - allStates[i, j].v));
                 }
             }
         }
 
+        //TODO : Update la policy a la fin !
+
+        DisplayDirection(ref allStates);
+    }
+
+    private void DisplayDirection(ref GridCell[,] allStates)
+    {
         for (int i = 0; i < allStates.GetLength(0); i++)
         {
             for (int j = 0; j < allStates.GetLength(1); j++)
             {
-                if (allStates[i, j].state.Equals(GridCell.GridState.End))
+                if (allStates[i, j].state.Equals(GridCell.GridState.End) ||
+                    allStates[i, j].state.Equals(GridCell.GridState.Unwalkable))
                     continue;
 
                 var rd = allStates[i, j].visual.GetComponent<Renderer>();
