@@ -42,7 +42,7 @@ public class GridWorld : MonoBehaviour
     public Transform gridParent;
 
     [Header("Agent")] public GameObject agentPrefab;
-    public Agent agent;
+    public AgentGridWorld agentGridWorld;
 
     [Header("World Parameter")]
     public float stepTime = 0.1f;
@@ -183,10 +183,10 @@ public class GridWorld : MonoBehaviour
         cam.orthographicSize = ((gridParameter.gridSize.x + gridParameter.gridSize.y) * 0.5f + 5f) * 0.5f;
 
         // Initialisation de l'agent
-        this.agent.Init(actionsDic, gridParameter.startState, gridParameter.targetState);
+        this.agentGridWorld.Init(actionsDic, gridParameter.startState, gridParameter.targetState);
 
         // Cration du visuel de l'agent
-        this.agent.visual = Instantiate(agentPrefab, new Vector3(this.agent.actualState.x, this.agent.actualState.y, 0.0f), Quaternion.identity);
+        this.agentGridWorld.visual = Instantiate(agentPrefab, new Vector3(this.agentGridWorld.actualState.x, this.agentGridWorld.actualState.y, 0.0f), Quaternion.identity);
 
         //this.agent.ValueIteration(ref grid);
         StartCoroutine(UpdateWorld());
@@ -223,7 +223,7 @@ public class GridWorld : MonoBehaviour
         int ite = 0;
         while (ite <= 100)
         {
-            this.agent.PolicyImprovement(ref grid);
+            this.agentGridWorld.PolicyImprovement(ref grid);
             //UpdateGridState(default);
             yield return new WaitForSeconds(stepTime);
             ite++;

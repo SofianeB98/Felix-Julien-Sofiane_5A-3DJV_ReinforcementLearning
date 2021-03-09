@@ -5,7 +5,7 @@ public abstract class Action
 {
     public string actionName;
 
-    public abstract void Perform(Agent agent, GridParameter gridParams, GridWorld env);
+    public abstract void Perform(AgentGridWorld agentGridWorld, GridParameter gridParams, GridWorld env);
 }
 
 [System.Serializable]
@@ -29,11 +29,11 @@ public class MoveAction : Action
         return false;
     }
 
-    public override void Perform(Agent agent, GridParameter gridParams, GridWorld env) 
+    public override void Perform(AgentGridWorld agentGridWorld, GridParameter gridParams, GridWorld env) 
     {
-        var newPos = agent.actualState + direction;
+        var newPos = agentGridWorld.actualState + direction;
         if (OutOfGridBound(newPos, ref gridParams))
             return;
-        agent.actualState = newPos;
+        agentGridWorld.actualState = newPos;
     }
 }

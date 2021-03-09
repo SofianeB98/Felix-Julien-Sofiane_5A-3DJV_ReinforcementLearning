@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public class Agent
+public class AgentGridWorld
 {
     [Header("Debug Grid")] 
     public Texture upArrow;
@@ -189,24 +189,21 @@ public class Agent
                 var rd = allStates[i, j].visual.GetComponent<Renderer>();
                 var act = policy[allStates[i, j].position] as MoveAction;
 
-                //allStates[i, j].visual.transform.localScale = new Vector3(act.direction.x, act.direction.y, 0.25f) + Vector3.one * 0.25f;
-
                 if (act.direction.Equals(Vector2Int.up))
                 {
-                    rd.material.mainTexture = downArrow; //.color = Color.red;
-                    //rd.material.color = Color.red;
+                    rd.material.mainTexture = upArrow; //.color = Color.red;
                 }
                 if (act.direction.Equals(Vector2Int.down))
                 {
-                    rd.material.mainTexture = upArrow; //.color = Color.magenta;
+                    rd.material.mainTexture = downArrow; //.color = Color.magenta;
                 }
                 if (act.direction.Equals(Vector2Int.left))
                 {
-                    rd.material.mainTexture = rightArrow; //.color = Color.blue;
+                    rd.material.mainTexture = leftArrow; //.color = Color.blue;
                 }
                 if (act.direction.Equals(Vector2Int.right))
                 {
-                    rd.material.mainTexture = leftArrow; //.color = Color.cyan;
+                    rd.material.mainTexture = rightArrow; //.color = Color.cyan;
                 }
             }
         }
