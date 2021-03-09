@@ -6,9 +6,9 @@ public class TicTacToe : MonoBehaviour
 {
     public const int GridSize = 3;
 
-    public Sprite Neutral;
-    public Sprite Cross;
-    public Sprite Circle;
+    public Texture Neutral;
+    public Texture Cross;
+    public Texture Circle;
     public GameObject tilePrefab;
 
     public GameState gameState;
@@ -18,7 +18,7 @@ public class TicTacToe : MonoBehaviour
         CROSS,
         CIRCLE
     }
-
+    [System.Serializable]
     public class GameState
     {
         public Tile[,] Grid;
@@ -31,6 +31,7 @@ public class TicTacToe : MonoBehaviour
                 return this.Grid[x, y];
             }
         }
+        [System.Serializable]
         public class Tile 
         {
             public GameObject visual;
@@ -81,6 +82,7 @@ public class TicTacToe : MonoBehaviour
         if (this.GetAvailableCell().Contains((x, y)))
         {
             this.gameState[x, y].state = state;
+            this.gameState[x, y].visual.GetComponent<Renderer>().material.mainTexture = GetTextureFromState(state);
             return true;
         }
         else
@@ -162,7 +164,7 @@ public class TicTacToe : MonoBehaviour
         return playerNumber == 0 ? State.CROSS : State.CIRCLE;
     }
 
-    public Sprite GetSpriteFromState(State state)
+    public Texture GetTextureFromState(State state)
     {
         switch (state)
         {
@@ -172,6 +174,33 @@ public class TicTacToe : MonoBehaviour
                 return this.Cross;
             default:
                 return this.Circle;
+        }
+    }
+
+    public void Start()
+    {
+        this.Initialize();
+    }
+    public void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Mouse0)) 
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+            Plane plane = new Plane(Vector3.back, Vector3.zero);
+            float dist = 0;
+            plane.Raycast(ray, out dist);
+            var intersectPos = ray.GetPoint(dist);
+            var coord = new Vector2Int(Mathf.RoundToInt(intersectPos.x), Mathf.RoundToInt(intersectPos.y));
+            
+            Debug.Log(coord);
+            if (coord.x < 0 || coord.x >= GridSize || coord.y < 0 || coord.y >= GridSize)
+                return;
+            if(SetCell(this.gameState.playerTurn, coord.x, coord.y)) 
+            {
+                Debug.Log(CheckEnd());
+                this.gameState.NextTurn();
+            }
         }
     }
 }
