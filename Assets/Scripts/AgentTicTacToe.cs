@@ -56,7 +56,7 @@ public class AgentTicTacToe
 
             // Generer une simulation de jeu
             // On va récupérer N state possible
-            SimulateGameState(ref explored, ref gs_copy);
+           // SimulateGameState(ref explored, ref gs_copy);
 
             float G = 0;
 
@@ -77,20 +77,28 @@ public class AgentTicTacToe
         float V = 0.0f;
 
         //list ou dico de chaque etat
-        Dictionary<TicTacToe.GameState, Vector2Int> explored0 = new Dictionary<TicTacToe.GameState, Vector2Int>();
+        //Pouvoir récupérer chaque etat pour un etat donné
+        //Get all posibilitie ==> Regarder dans la policy le meilleure V (V = Return / N)
+        
+        //List< Dictionary<TicTacToe.GameState, Vector2Int> > explored0 = new List<Dictionary<TicTacToe.GameState, Vector2Int>>();
+        //Dictionary<TicTacToe.GameState, Vector2Int> exploredTmp = new Dictionary<TicTacToe.GameState, Vector2Int>();
+        List<(TicTacToe.GameState, Vector2Int)> explored = new List<(TicTacToe.GameState, Vector2Int)>();
 
         for (int i = 0; i < episodeCount; i++)
         {
+            Dictionary<TicTacToe.GameState, Vector2Int> exploredTmp = new Dictionary<TicTacToe.GameState, Vector2Int>();
+            
             // Copy du GS
             var copyGs = gs_copy.Clone();
-            Dictionary<TicTacToe.GameState, Vector2Int> exploredTmp = new Dictionary<TicTacToe.GameState, Vector2Int>();
+            
             // Generer une simulation de jeu
             // On va récupérer N state possible
-            //Remonter le gain avant le for T - 1
-            float R = SimulateGameState(ref exploredTmp, ref copyGs);
-            
+            float R = SimulateGameState(ref policy, ref exploredTmp, ref copyGs);
             float G = 0;
 
+            // Checker si le state qu'on va incrémenté est contenu dans Explored
+            // Si c'est le cas on l'incrémenter lui
+            // Sinon on ajoute un nouveau et on incrémente
             var list = exploredTmp.Keys.ToList();
             
             // On retropopage tout
@@ -99,29 +107,62 @@ public class AgentTicTacToe
                 G = G + R;
 
                 var strct = list[t];
+
+                if (explored.Contains(
+                    explored.First(x => x.Item1.Grid == strct.Grid)
+                    ))
+                {
+                    // On incrémente celui deja existant
+                }
+                else
+                {
+                    //Sinon on incrément celui qui existe pas et on l'ajoute
+                    strct.SetReturns(list[t].Returns + G);
+                    strct.SetN(list[t].N + 1);
+
+                    list[t] = strct;
+                }
                 
-                strct.SetReturns(list[t].Returns + G);
-                strct.SetN(list[t].N + 1);
-
-                list[t] = strct;
+                
+                // On Policy
+                // Epsilon greedy = range entre 0 - 10, et on tire RDM, si en dessous de Epsi action rdm, sinon policy
+                // var policyGS = policy.FirstOrDefault(x => x.Key.Grid == e.Grid);
+                // if (policy.ContainsKey(policyGS.Key))
+                // {
+                //     policyGS.Key.SetN(e.N);
+                //     policyGS.Key.SetReturns(e.Returns);
+                // }
             }
 
-            int cIdx = 0;
-            foreach (var e in exploredTmp.Keys)
-            {
-                e.SetN(list[cIdx].N);
-                e.SetReturns(list[cIdx++].Returns);
-                explored0.Add(e, exploredTmp[e]);
-            }
+            //int cIdx = 0;
+            // foreach (var e in exploredTmp.Keys)
+            // {
+            //     e.SetN(list[cIdx].N);
+            //     e.SetReturns(list[cIdx++].Returns);
+            //
+            
+            // }
+            
+            //explored0.Add(exploredTmp);
+            
+            // VS = Return / N
         }
-
-        // Avec cette list ou dico on met dans policy
+        
+        // Off policy, on passe sur Explored, Pour un etat S donne, on cherche toutes les Actions atteignable
+        // Pour ces action atteignable on va prendre la meilleure possible V = (Returns / N) et assigner 
+        // exemple : Etat null => je cherche tout les etat atteignable (= action)
+        // Parmis ces actions, je regarde celui qui a le meilleure V
+        // Et j'applique la value à la policy[key]
+        
+        // ajouter la policy RDM en init, puis ajouter les GS manquant au fur et a mpesure
+        
+        // Avec cette list ou dico on met a jour dans policy
         
 
         return V;
     }
 
-    public float SimulateGameState(ref Dictionary<TicTacToe.GameState, Vector2Int> exploredState,
+    public float SimulateGameState(ref Dictionary<TicTacToe.GameState, Vector2Int> policy, ref Dictionary<TicTacToe.GameState, Vector2Int> exploredState,
         ref TicTacToe.GameState gs)
     {
         int playerTurn = 0;
@@ -129,8 +170,7 @@ public class AgentTicTacToe
 
         // IA = Rond, donc playerWinner = 1
         int playerWinner = -1;
-        
-        exploredState.Add(gs.Clone(), default);
+
         
         while (!gameEnd)
         {
@@ -138,9 +178,22 @@ public class AgentTicTacToe
             var c = gs.GetAvailableCell();
             var selectedCell = c[Random.Range(0, c.Count)];
             
+            var clone = gs.Clone();
+            var gridToTest = policy.ToList().FirstOrDefault(x => x.Key.Grid == clone.Grid).Key;
+            if (policy.ContainsKey(gridToTest))
+            {
+                selectedCell = (policy[gridToTest].x, policy[gridToTest].y);
+            }
+            else
+            {
+                policy.Add(clone, new Vector2Int(selectedCell.Item1, selectedCell.Item2));
+            }
+            // Grid, N, R, ...
+
+            exploredState.Add(clone, new Vector2Int(selectedCell.Item1, selectedCell.Item2));
+            
             if (ticTacToe.SetCellWithoutChangeGraphics(playerTurn, selectedCell.Item1, selectedCell.Item2, ref gs))
             {
-                exploredState.Add(gs.Clone(), new Vector2Int(selectedCell.Item1, selectedCell.Item2));
                 
                 var victoryState = ticTacToe.CheckVictory(ref gs);
                 if (!victoryState.Item1)
