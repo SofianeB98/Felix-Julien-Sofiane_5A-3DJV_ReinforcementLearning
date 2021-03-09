@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [System.Serializable]
@@ -76,32 +77,51 @@ public class AgentTicTacToe
         float V = 0.0f;
 
         //list ou dico de chaque etat
-        Dictionary<TicTacToe.GameState, Vector2Int> explored = new Dictionary<TicTacToe.GameState, Vector2Int>();
+        Dictionary<TicTacToe.GameState, Vector2Int> explored0 = new Dictionary<TicTacToe.GameState, Vector2Int>();
 
         for (int i = 0; i < episodeCount; i++)
         {
             // Copy du GS
             var copyGs = gs_copy.Clone();
-
+            Dictionary<TicTacToe.GameState, Vector2Int> exploredTmp = new Dictionary<TicTacToe.GameState, Vector2Int>();
             // Generer une simulation de jeu
             // On va récupérer N state possible
-            SimulateGameState(ref explored, ref copyGs);
-
+            //Remonter le gain avant le for T - 1
+            float R = SimulateGameState(ref exploredTmp, ref copyGs);
+            
             float G = 0;
 
+            var list = exploredTmp.Keys.ToList();
+            
             // On retropopage tout
-            for (int t = 1; t >= 0; t++)
+            for (int t = list.Count - 1; t >= 0; t--)
             {
+                G = G + R;
+
+                var strct = list[t];
                 
+                strct.SetReturns(list[t].Returns + G);
+                strct.SetN(list[t].N + 1);
+
+                list[t] = strct;
+            }
+
+            int cIdx = 0;
+            foreach (var e in exploredTmp.Keys)
+            {
+                e.SetN(list[cIdx].N);
+                e.SetReturns(list[cIdx++].Returns);
+                explored0.Add(e, exploredTmp[e]);
             }
         }
 
         // Avec cette list ou dico on met dans policy
+        
 
         return V;
     }
 
-    public void SimulateGameState(ref Dictionary<TicTacToe.GameState, Vector2Int> exploredState,
+    public float SimulateGameState(ref Dictionary<TicTacToe.GameState, Vector2Int> exploredState,
         ref TicTacToe.GameState gs)
     {
         int playerTurn = 0;
@@ -109,6 +129,8 @@ public class AgentTicTacToe
 
         // IA = Rond, donc playerWinner = 1
         int playerWinner = -1;
+        
+        exploredState.Add(gs.Clone(), default);
         
         while (!gameEnd)
         {
@@ -138,5 +160,7 @@ public class AgentTicTacToe
                 }
             }
         }
+
+        return playerWinner == 1 ? 1.0f : 0.0f;
     }
 }

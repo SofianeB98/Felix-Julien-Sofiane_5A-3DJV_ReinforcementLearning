@@ -34,6 +34,16 @@ public class TicTacToe : MonoBehaviour
         // Data QLearning
         public float N;
         public float Returns;
+
+        public void SetReturns(float ret)
+        {
+            this.Returns = ret;
+        }
+        
+        public void SetN(float n)
+        {
+            this.N = n;
+        }
         
         public Tile this[int x, int y]
         {
@@ -140,15 +150,15 @@ public class TicTacToe : MonoBehaviour
     public bool SetCell(int playerTurn, int x, int y)
     {
         var state = PlayerNumberToState(playerTurn);
-        if (this.gameState.GetAvailableCell().Contains((x, y)))
+        //if (this.gameState.GetAvailableCell().Contains((x, y)))
         {
             this.gameState.Grid[x, y].SetState(state); //= new GameState.Tile(null, State.CROSS); //
             this.gameState.Grid[x, y].visual.GetComponent<Renderer>().material.mainTexture = GetTextureFromState(state);
             return true;
         }
-        else
+        //else
         {
-            return false;
+            //return false;
         }
     }
 
@@ -242,7 +252,7 @@ public class TicTacToe : MonoBehaviour
         // Diagonal 2
         if (gs[0, 2] == gs[1, 1].state && gs[0, 2] == gs[2, 0].state)
         {
-            if (gs[0, 0] != State.NEUTRAL)
+            if (gs[0, 2] != State.NEUTRAL)
             {
                 return (true, StateToPlayerNumber(gs[0, 0].state));
             }
