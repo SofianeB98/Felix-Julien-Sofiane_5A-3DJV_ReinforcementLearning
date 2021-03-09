@@ -329,19 +329,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridParameter:
-    gridSize: {x: 10, y: 10}
+    gridSize: {x: 3, y: 3}
     gridCellPrefab: {fileID: 8956055984983367981, guid: 66a75f85a2fa3484c96a622450a3cc7c, type: 3}
-    unwalkableCellCount: 1
+    unwalkableCellCount: 5
     bonusCount: 1
     startState: {x: 0, y: 0}
     targetState: {x: 0, y: 0}
   gridParent: {fileID: 1141487546}
   agentPrefab: {fileID: 7118079960431714812, guid: f21c66e73c9e3d34ca0294103c2cd6ce, type: 3}
-  agent:
-    upArrow: {fileID: 2800000, guid: 5f31055c2aebf834a92e9133b97fce12, type: 3}
-    downArrow: {fileID: 2800000, guid: 1142b76c73afbd042966bc285ec8fb73, type: 3}
-    rightArrow: {fileID: 2800000, guid: 251ea918d0d6bf047b1f5e0c02169e2d, type: 3}
-    leftArrow: {fileID: 2800000, guid: 213103a590818fc48a58da11ebec69d5, type: 3}
+  agentGridWorld:
+    upArrow: {fileID: 0}
+    downArrow: {fileID: 0}
+    rightArrow: {fileID: 0}
+    leftArrow: {fileID: 0}
     actualState: {x: 0, y: 0}
     targetState: {x: 0, y: 0}
     visual: {fileID: 0}

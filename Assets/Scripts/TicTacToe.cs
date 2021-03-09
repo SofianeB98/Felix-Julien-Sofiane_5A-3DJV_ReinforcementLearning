@@ -39,12 +39,12 @@ public class TicTacToe : MonoBehaviour
 
             public static bool operator== (Tile a, State s) 
             {
-                return a.state == s;
+                return a.state.Equals(s);
             }
 
             public static bool operator!= (Tile a, State s) 
             {
-                return a.state != s;
+                return !(a.state.Equals(s));
             }
 
             public Tile(GameObject visual, State s)
@@ -103,10 +103,14 @@ public class TicTacToe : MonoBehaviour
         {
             // Vertical Check
             var state = this.gameState[i, 0];
+            if (state.state == State.NEUTRAL)
+                continue;
+            
             bool ok = true;
+            
             for (int j = 1; j < GridSize; j++)
             {
-                if (this.gameState[i, j] != state)
+                if (this.gameState[i, j] != state.state)
                     ok = false;
             }
             if (ok)
@@ -118,10 +122,13 @@ public class TicTacToe : MonoBehaviour
         {
             // Vertical Check
             var state = this.gameState[0, i];
+            if (state.state == State.NEUTRAL)
+                continue;
+            
             bool ok = true;
             for (int j = 1; j < GridSize; j++)
             {
-                if (this.gameState[j, i] != state)
+                if (this.gameState[j, i] != state.state)
                     ok = false;
             }
             if (ok)
@@ -130,12 +137,12 @@ public class TicTacToe : MonoBehaviour
         }
 
         // Diagonal 1
-        if(this.gameState[0, 0] == this.gameState[1, 1] && this.gameState[0, 0] == this.gameState[2, 2]) 
+        if(this.gameState[0, 0] == this.gameState[1, 1].state && this.gameState[0, 0] == this.gameState[2, 2].state) 
         {
             return true;
         }
         // Diagonal 2
-        if (this.gameState[0, 2] == this.gameState[1, 1] && this.gameState[0, 2] == this.gameState[2, 0])
+        if (this.gameState[0, 2] == this.gameState[1, 1].state && this.gameState[0, 2] == this.gameState[2, 0].state)
         {
             return true;
         }
