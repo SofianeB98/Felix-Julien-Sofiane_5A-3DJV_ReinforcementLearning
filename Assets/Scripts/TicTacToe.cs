@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,18 +17,24 @@ public class TicTacToe : MonoBehaviour
     public delegate void OnVictory(int player);
     public event OnVictory victory;
 
+    public bool gameEnd = false;
+    
     public enum State
     {
-        NEUTRAL,
-        CROSS,
-        CIRCLE
+        NEUTRAL = -1,
+        CROSS = 0,
+        CIRCLE = 1
     }
     [System.Serializable]
-    public class GameState
+    public struct GameState
     {
+        // Data informative
         public Tile[,] Grid;
-        public int playerTurn;
-        public int turn;
+        
+        // Data QLearning
+        public float N;
+        public float Returns;
+        
         public Tile this[int x, int y]
         {
             get
@@ -36,7 +43,7 @@ public class TicTacToe : MonoBehaviour
             }
         }
         [System.Serializable]
-        public class Tile
+        public struct Tile
         {
             public GameObject visual;
             public State state;
@@ -56,7 +63,13 @@ public class TicTacToe : MonoBehaviour
                 this.visual = visual;
                 this.state = s;
             }
+
+            public void SetState(State s)
+            {
+                this.state = s;
+            }
         }
+        
         public GameState(GameObject tilePrefab, Transform parent)
         {
             // Initialize Grid wit Neutral state
@@ -69,24 +82,68 @@ public class TicTacToe : MonoBehaviour
                     this.Grid[i, j] = new Tile(go, State.NEUTRAL);
                 }
             }
-            this.playerTurn = 0;
-            this.turn = 0;
+            
+            N = 0.0f;
+            Returns = 0.0f;
         }
-
-        public void NextTurn()
+        
+        public GameState(Tile[,] g, float n, float r)
         {
-            this.playerTurn = (playerTurn + 1) % 2;
+            // Initialize Grid wit Neutral state
+            Grid = new Tile[g.GetLength(0),g.GetLength(1)];
+            for (int i = 0; i < Grid.GetLength(0); i++)
+            {
+                for (int j = 0; j < Grid.GetLength(1); j++)
+                {
+                    Grid[i,j] = new Tile(g[i,j].visual, g[i,j].state);
+                }
+            }
+            
+            N = n;
+            Returns = r;
         }
 
+        public GameState Clone()
+        {
+            var gs = new GameState();
+            gs.Grid = new Tile[GridSize,GridSize];
+            gs.Grid = this.Grid.Clone() as Tile[,];
+
+            gs.N = N;
+            gs.Returns = Returns;
+
+            return gs;
+        }
+        
+        public List<(int, int)> GetAvailableCell()
+        {
+            var availableCells = new List<(int, int)>();
+            for (int i = 0; i < GridSize; i++)
+            {
+                for (int j = 0; j < GridSize; j++)
+                {
+                    if (this[i, j] == State.NEUTRAL)
+                    {
+                        availableCells.Add((i, j));
+                    }
+                }
+            }
+            return availableCells;
+        }
     }
 
+    public int playerTurn;
+
+    public AgentTicTacToe agent;
+    
+    
     public bool SetCell(int playerTurn, int x, int y)
     {
         var state = PlayerNumberToState(playerTurn);
-        if (this.GetAvailableCell().Contains((x, y)))
+        if (this.gameState.GetAvailableCell().Contains((x, y)))
         {
-            this.gameState[x, y].state = state;
-            this.gameState[x, y].visual.GetComponent<Renderer>().material.mainTexture = GetTextureFromState(state);
+            this.gameState.Grid[x, y].SetState(state); //= new GameState.Tile(null, State.CROSS); //
+            this.gameState.Grid[x, y].visual.GetComponent<Renderer>().material.mainTexture = GetTextureFromState(state);
             return true;
         }
         else
@@ -95,27 +152,52 @@ public class TicTacToe : MonoBehaviour
         }
     }
 
+    public bool SetCellWithoutChangeGraphics(int playerTurn, int x, int y, ref GameState gs)
+    {
+        var state = PlayerNumberToState(playerTurn);
+        if (gs.GetAvailableCell().Contains((x, y)))
+        {
+            gs.Grid[x, y].SetState(state);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    public void NextTurn(ref int player)
+    {
+        player = (player + 1) % 2;
+    }
+    
     public void Initialize()
     {
         this.gameState = new GameState(this.tilePrefab, this.gameObject.transform);
+        this.agent = new AgentTicTacToe();
+        agent.ticTacToe = this;
+        agent.policy = new Dictionary<GameState, Vector2Int>();
+        
+        
+        agent.Simulate(ref this.gameState);
     }
 
-    public bool CheckNullMatch()
+    public bool CheckNullMatch(ref GameState gs)
     {
-        if (GetAvailableCell().Count == 0)
+        if (gs.GetAvailableCell().Count == 0)
         {
             return true;
         }
         return false;
     }
 
-    public (bool, int) CheckVictory()
+    public (bool, int) CheckVictory(ref GameState gs)
     {
         // Vertical
         for (int i = 0; i < GridSize; i++)
         {
             // Vertical Check
-            var tile = this.gameState[i, 0];
+            var tile = gs[i, 0];
             if (tile.state == State.NEUTRAL)
                 continue;
 
@@ -123,7 +205,7 @@ public class TicTacToe : MonoBehaviour
 
             for (int j = 1; j < GridSize; j++)
             {
-                if (this.gameState[i, j] != tile.state)
+                if (gs[i, j] != tile.state)
                     ok = false;
             }
             if (ok)
@@ -134,14 +216,14 @@ public class TicTacToe : MonoBehaviour
         for (int i = 0; i < GridSize; i++)
         {
             // Vertical Check
-            var tile = this.gameState[0, i];
+            var tile = gs[0, i];
             if (tile.state == State.NEUTRAL)
                 continue;
 
             bool ok = true;
             for (int j = 1; j < GridSize; j++)
             {
-                if (this.gameState[j, i] != tile.state)
+                if (gs[j, i] != tile.state)
                     ok = false;
             }
             if (ok)
@@ -150,47 +232,33 @@ public class TicTacToe : MonoBehaviour
         }
 
         // Diagonal 1
-        if (this.gameState[0, 0] == this.gameState[1, 1].state && this.gameState[0, 0] == this.gameState[2, 2].state)
+        if (gs[0, 0] == gs[1, 1].state && gs[0, 0] == gs[2, 2].state)
         {
-            if (this.gameState[0, 0] != State.NEUTRAL)
+            if (gs[0, 0] != State.NEUTRAL)
             {
-                return (true, StateToPlayerNumber(this.gameState[0, 0].state));
+                return (true, StateToPlayerNumber(gs[0, 0].state));
             }
         }
         // Diagonal 2
-        if (this.gameState[0, 2] == this.gameState[1, 1].state && this.gameState[0, 2] == this.gameState[2, 0].state)
+        if (gs[0, 2] == gs[1, 1].state && gs[0, 2] == gs[2, 0].state)
         {
-            if (this.gameState[0, 0] != State.NEUTRAL)
+            if (gs[0, 0] != State.NEUTRAL)
             {
-                return (true, StateToPlayerNumber(this.gameState[0, 0].state));
+                return (true, StateToPlayerNumber(gs[0, 0].state));
             }
         }
 
         return (false, -1);
     }
 
-    public List<(int, int)> GetAvailableCell()
-    {
-        var availableCells = new List<(int, int)>();
-        for (int i = 0; i < GridSize; i++)
-        {
-            for (int j = 0; j < GridSize; j++)
-            {
-                if (this.gameState[i, j] == State.NEUTRAL)
-                {
-                    availableCells.Add((i, j));
-                }
-            }
-        }
-        return availableCells;
-    }
+    
 
-    State PlayerNumberToState(int playerNumber)
+    public State PlayerNumberToState(int playerNumber)
     {
         return playerNumber == 0 ? State.CROSS : State.CIRCLE;
     }
 
-    int StateToPlayerNumber(State state)
+    public int StateToPlayerNumber(State state)
     {
         if (state == State.NEUTRAL)
             return -1;
@@ -214,9 +282,10 @@ public class TicTacToe : MonoBehaviour
     {
         this.Initialize();
     }
+    
     public void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        if (Input.GetKeyDown(KeyCode.Mouse0) && !gameEnd)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
@@ -229,19 +298,27 @@ public class TicTacToe : MonoBehaviour
             Debug.Log(coord);
             if (coord.x < 0 || coord.x >= GridSize || coord.y < 0 || coord.y >= GridSize)
                 return;
-            if (SetCell(this.gameState.playerTurn, coord.x, coord.y))
+            if (SetCell(this.playerTurn, coord.x, coord.y))
             {
-                var victoryState = CheckVictory();
-                if (!CheckVictory().Item1)
+                var victoryState = CheckVictory(ref gameState);
+                if (!CheckVictory(ref gameState).Item1)
                 {
-                    CheckNullMatch();
+                    if (!CheckNullMatch(ref gameState))
+                        NextTurn(ref playerTurn);
+                    else
+                        gameEnd = true;
                 }
                 else
                 {
                     this.victory?.Invoke(victoryState.Item2);
+                    gameEnd = true;
                 }
-                this.gameState.NextTurn();
             }
+        }
+
+        if (gameEnd && Input.GetKeyDown(KeyCode.R))
+        {
+            // Reset
         }
     }
 }
