@@ -4,6 +4,12 @@ using UnityEngine;
 [System.Serializable]
 public class Agent
 {
+    [Header("Debug Grid")] 
+    public Texture upArrow;
+    public Texture downArrow;
+    public Texture rightArrow;
+    public Texture leftArrow;
+    
     public Dictionary<Vector2Int, List<Action>> actions;
     public Dictionary<Vector2Int, Action> policy;
 
@@ -45,10 +51,11 @@ public class Agent
 
     public void PolicyEvaluation(ref GridCell[,] allStates)
     {
-        float delta = 0.0f;
+        float delta = theta + 1;
         int iteration = 0;
-        while (delta < theta && iteration < 1)
+        while (delta > theta && iteration < 1)
         {
+            delta = 0.0f;
             iteration++;
 
             // Pour chaque s in S
@@ -56,9 +63,6 @@ public class Agent
             {
                 for (int j = 0; j < allStates.GetLength(1); j++)
                 {
-                    if (!policy.ContainsKey(allStates[i, j].position))
-                        continue;
-
                     float tmp = allStates[i, j].v;
 
                     //Perform une action
@@ -86,9 +90,6 @@ public class Agent
         {
             for (int j = 0; j < allStates.GetLength(1); j++)
             {
-                if (!policy.ContainsKey(allStates[i, j].position))
-                    continue;
-
                 var tmpAct = policy[allStates[i, j].position];
 
                 // Je cherche la meilleure action
@@ -123,19 +124,17 @@ public class Agent
 
     public void ValueIteration(ref GridCell[,] allStates)
     {
-        float delta = 0.0f;
+        float delta = theta + 1;
         int iteration = 0;
-        while (delta < theta && iteration < 1000000)
+        while (delta > theta && iteration < 100000000)
         {
+            delta = 0.0f;
             iteration++;
 
             for (int i = 0; i < allStates.GetLength(0); i++)
             {
                 for (int j = 0; j < allStates.GetLength(1); j++)
                 {
-                    if (!policy.ContainsKey(allStates[i, j].position))
-                        continue;
-
                     float tmp = allStates[i, j].v;
                     float maxV = float.MinValue;
 
@@ -153,7 +152,7 @@ public class Agent
                         }
                     }
 
-                    allStates[i, j].v = maxV.Equals(float.MinValue) ? 0.0f : maxV;
+                    allStates[i, j].v = maxV < -10000.0f ? allStates[i, j].v : maxV;
                     delta = Mathf.Max(delta, Mathf.Abs(tmp - allStates[i, j].v));
                 }
             }
@@ -161,6 +160,19 @@ public class Agent
 
         //TODO : Update la policy a la fin !
 
+        string val = "";
+        for (int j = allStates.GetLength(1) - 1; j >=0; j--)
+        {
+            for (int i = 0; i < allStates.GetLength(0); i++)
+            {
+                val += "[ "  + allStates[i,j].v  + " ] ";
+            }
+
+            val += "\n";
+        }
+        
+        Debug.Log(val);
+        
         DisplayDirection(ref allStates);
     }
 
@@ -171,29 +183,30 @@ public class Agent
             for (int j = 0; j < allStates.GetLength(1); j++)
             {
                 if (allStates[i, j].state.Equals(GridCell.GridState.End) ||
-                    allStates[i, j].state.Equals(GridCell.GridState.Unwalkable))
+                    allStates[i, j].state.Equals(GridCell.GridState.Bloc))
                     continue;
 
                 var rd = allStates[i, j].visual.GetComponent<Renderer>();
                 var act = policy[allStates[i, j].position] as MoveAction;
 
-                allStates[i, j].visual.transform.localScale = new Vector3(act.direction.x, act.direction.y, 0.25f) + Vector3.one * 0.25f;
+                //allStates[i, j].visual.transform.localScale = new Vector3(act.direction.x, act.direction.y, 0.25f) + Vector3.one * 0.25f;
 
                 if (act.direction.Equals(Vector2Int.up))
                 {
-                    rd.material.color = Color.red;
+                    rd.material.mainTexture = downArrow; //.color = Color.red;
+                    //rd.material.color = Color.red;
                 }
                 if (act.direction.Equals(Vector2Int.down))
                 {
-                    rd.material.color = Color.magenta;
+                    rd.material.mainTexture = upArrow; //.color = Color.magenta;
                 }
                 if (act.direction.Equals(Vector2Int.left))
                 {
-                    rd.material.color = Color.blue;
+                    rd.material.mainTexture = rightArrow; //.color = Color.blue;
                 }
                 if (act.direction.Equals(Vector2Int.right))
                 {
-                    rd.material.color = Color.cyan;
+                    rd.material.mainTexture = leftArrow; //.color = Color.cyan;
                 }
             }
         }

@@ -10,7 +10,7 @@ public class GridCell
         Walkable,
         End,
         Start,
-        Unwalkable,
+        Bloc,
         Bonus
     }
 
@@ -68,7 +68,7 @@ public class GridWorld : MonoBehaviour
         var upAction = new MoveAction(new Vector2Int(0, 1), "DU");
         var downAction = new MoveAction(new Vector2Int(0, -1), "DD");
 
-        // On les ajoutes dans une liste afin de définir tout les actions possible pour un etat donne
+        // On les ajoutes dans une liste afin de definir tout les actions possible pour un etat donne
         var actions = new List<Action>();
         actions.Add(rightAction);
         actions.Add(leftAction);
@@ -96,46 +96,36 @@ public class GridWorld : MonoBehaviour
                     Quaternion.identity);
                 grid[i, j].visual.transform.SetParent(gridParent);
 
-                // Définition du reward initial
+                // Definition du reward initial
                 grid[i, j].r = -1.0f;
                 grid[i, j].v = 0.0f;
 
-                // Initialisation des actions possible pour le state [i, j]
+                // Initialisation vide des actions pour le state [i, j]
                 var availableActions = new List<Action>();
-                foreach (var act in actions)
-                {
-                    MoveAction a = act as MoveAction;
-                    if (a.OutOfGridBound(grid[i, j].position + a.direction, ref gridParameter))
-                        continue;
-
-                    availableActions.Add(act);
-                }
                 actionsDic.Add(grid[i, j].position, availableActions);
             }
         }
 
         // Definition du start state
-        gridParameter.startState =
-            grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
+        gridParameter.startState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
         grid[gridParameter.startState.x, gridParameter.startState.y].state = GridCell.GridState.Start;
 
         // Definition du end state
-        gridParameter.targetState =
-            grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
+        gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
 
         if (gridParameter.targetState.Equals(gridParameter.startState))
             while (gridParameter.targetState.Equals(gridParameter.startState))
-                gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x),
-                    Random.Range(0, gridParameter.gridSize.y)].position;
+                gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
 
         // Setup du visuel du end state
         grid[gridParameter.targetState.x, gridParameter.targetState.y].visual.GetComponent<Renderer>().material.color = Color.green;
         grid[gridParameter.targetState.x, gridParameter.targetState.y].state = GridCell.GridState.End;
 
         // Set du reward du end state
-        grid[gridParameter.targetState.x, gridParameter.targetState.y].r = 10.0f;
+        grid[gridParameter.targetState.x, gridParameter.targetState.y].r = 0.0f;
+        grid[gridParameter.targetState.x, gridParameter.targetState.y].v = 1000.0f;
 
-        // Reset des action possible au end state, on est à la fin donc on ne fait plus rien !
+        // Reset des action possible au end state, on est ï¿½ la fin donc on ne fait plus rien !
         actionsDic[gridParameter.targetState] = new List<Action>();
 
         // Creation des obstacles
@@ -150,14 +140,40 @@ public class GridWorld : MonoBehaviour
                      || grid[idx.x, idx.y].state.Equals(GridCell.GridState.Start)
                      || ThereIsAnOtherObstacleSoClose(idx));
 
-            grid[idx.x, idx.y].state = GridCell.GridState.Unwalkable;
-            grid[idx.x, idx.y].r = -100.0f;
+            grid[idx.x, idx.y].state = GridCell.GridState.Bloc;
+            grid[idx.x, idx.y].r = 0.0f;
             grid[idx.x, idx.y].v = 0.0f;
             grid[idx.x, idx.y].visual.GetComponent<Renderer>().material.color = Color.black;
 
+            //actionsDic.Remove(grid[idx.x, idx.y].position);
             actionsDic[grid[idx.x, idx.y].position] = new List<Action>();
         }
+        
+        // Definition des actions possible pour chaque etat
+        for (int i = 0; i < gridParameter.gridSize.x; i++)
+        {
+            for (int j = 0; j < gridParameter.gridSize.y; j++)
+            {
+                if(grid[i,j].state.Equals(GridCell.GridState.End) || 
+                   grid[i,j].state.Equals(GridCell.GridState.Bloc))
+                    continue;
+                
+                // Initialisation des actions possible pour le state [i, j]
+                foreach (var act in actions)
+                {
+                    MoveAction a = act as MoveAction;
+                    if (a.OutOfGridBound(grid[i, j].position + a.direction, ref gridParameter))
+                        continue;
+                    
+                    var nxt = grid[i, j].position + a.direction;
+                    if (grid[nxt.x, nxt.y].state.Equals(GridCell.GridState.Bloc))
+                        continue;
 
+                    actionsDic[grid[i, j].position].Add(act);
+                }
+            }
+        }
+        
         // Creation des Bonus
 
 
@@ -170,11 +186,10 @@ public class GridWorld : MonoBehaviour
         this.agent.Init(actionsDic, gridParameter.startState, gridParameter.targetState);
 
         // Cration du visuel de l'agent
-        this.agent.visual = Instantiate(agentPrefab,
-            new Vector3(this.agent.actualState.x, this.agent.actualState.y, 0.0f), Quaternion.identity);
+        this.agent.visual = Instantiate(agentPrefab, new Vector3(this.agent.actualState.x, this.agent.actualState.y, 0.0f), Quaternion.identity);
 
-        this.agent.ValueIteration(ref grid);
-        //StartCoroutine(UpdateWorld());
+        //this.agent.ValueIteration(ref grid);
+        StartCoroutine(UpdateWorld());
     }
 
     private bool ThereIsAnOtherObstacleSoClose(Vector2Int idx)
@@ -194,7 +209,7 @@ public class GridWorld : MonoBehaviour
                     continue;
 
 
-                if (grid[i, j].state.Equals(GridCell.GridState.Unwalkable))
+                if (grid[i, j].state.Equals(GridCell.GridState.Bloc))
                     return true;
 
             }
@@ -206,7 +221,7 @@ public class GridWorld : MonoBehaviour
     private IEnumerator UpdateWorld()
     {
         int ite = 0;
-        while (ite <= 1000)
+        while (ite <= 100)
         {
             this.agent.PolicyImprovement(ref grid);
             //UpdateGridState(default);
@@ -223,11 +238,9 @@ public class GridWorld : MonoBehaviour
     {
         // Update de la position de l'agent
 
-        // Update des bonus si récolté
+        // Update des bonus si rï¿½coltï¿½
 
         // End de la simulation si agent == target
-
-
     }
 }
 
