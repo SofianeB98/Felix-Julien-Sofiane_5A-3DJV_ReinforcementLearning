@@ -12,6 +12,10 @@ public class TicTacToe : MonoBehaviour
     public GameObject tilePrefab;
 
     public GameState gameState;
+
+    public delegate void OnVictory(int player);
+    public event OnVictory victory;
+
     public enum State
     {
         NEUTRAL,
@@ -32,17 +36,17 @@ public class TicTacToe : MonoBehaviour
             }
         }
         [System.Serializable]
-        public class Tile 
+        public class Tile
         {
             public GameObject visual;
             public State state;
 
-            public static bool operator== (Tile a, State s) 
+            public static bool operator ==(Tile a, State s)
             {
                 return a.state.Equals(s);
             }
 
-            public static bool operator!= (Tile a, State s) 
+            public static bool operator !=(Tile a, State s)
             {
                 return !(a.state.Equals(s));
             }
@@ -61,7 +65,7 @@ public class TicTacToe : MonoBehaviour
             {
                 for (int j = 0; j < GridSize; j++)
                 {
-                    GameObject go = GameObject.Instantiate(tilePrefab, new Vector3(i, j, 0), Quaternion.identity, parent); 
+                    GameObject go = GameObject.Instantiate(tilePrefab, new Vector3(i, j, 0), Quaternion.identity, parent);
                     this.Grid[i, j] = new Tile(go, State.NEUTRAL);
                 }
             }
@@ -96,58 +100,73 @@ public class TicTacToe : MonoBehaviour
         this.gameState = new GameState(this.tilePrefab, this.gameObject.transform);
     }
 
-    public bool CheckEnd()
+    public bool CheckNullMatch()
+    {
+        if (GetAvailableCell().Count == 0)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public (bool, int) CheckVictory()
     {
         // Vertical
         for (int i = 0; i < GridSize; i++)
         {
             // Vertical Check
-            var state = this.gameState[i, 0];
-            if (state.state == State.NEUTRAL)
+            var tile = this.gameState[i, 0];
+            if (tile.state == State.NEUTRAL)
                 continue;
-            
+
             bool ok = true;
-            
+
             for (int j = 1; j < GridSize; j++)
             {
-                if (this.gameState[i, j] != state.state)
+                if (this.gameState[i, j] != tile.state)
                     ok = false;
             }
             if (ok)
-                return true;
+                return (true, StateToPlayerNumber(tile.state));
 
         }
         // Horizontal
         for (int i = 0; i < GridSize; i++)
         {
             // Vertical Check
-            var state = this.gameState[0, i];
-            if (state.state == State.NEUTRAL)
+            var tile = this.gameState[0, i];
+            if (tile.state == State.NEUTRAL)
                 continue;
-            
+
             bool ok = true;
             for (int j = 1; j < GridSize; j++)
             {
-                if (this.gameState[j, i] != state.state)
+                if (this.gameState[j, i] != tile.state)
                     ok = false;
             }
             if (ok)
-                return true;
+                return (true, StateToPlayerNumber(tile.state));
 
         }
 
         // Diagonal 1
-        if(this.gameState[0, 0] == this.gameState[1, 1].state && this.gameState[0, 0] == this.gameState[2, 2].state) 
+        if (this.gameState[0, 0] == this.gameState[1, 1].state && this.gameState[0, 0] == this.gameState[2, 2].state)
         {
-            return true;
+            if (this.gameState[0, 0] != State.NEUTRAL)
+            {
+                return (true, StateToPlayerNumber(this.gameState[0, 0].state));
+            }
         }
         // Diagonal 2
         if (this.gameState[0, 2] == this.gameState[1, 1].state && this.gameState[0, 2] == this.gameState[2, 0].state)
         {
-            return true;
+            if (this.gameState[0, 0] != State.NEUTRAL)
+            {
+                return (true, StateToPlayerNumber(this.gameState[0, 0].state));
+            }
         }
 
-        return false;
+        return (false, -1);
     }
 
     public List<(int, int)> GetAvailableCell()
@@ -171,6 +190,13 @@ public class TicTacToe : MonoBehaviour
         return playerNumber == 0 ? State.CROSS : State.CIRCLE;
     }
 
+    int StateToPlayerNumber(State state)
+    {
+        if (state == State.NEUTRAL)
+            return -1;
+        return state == State.CROSS ? 0 : 1;
+    }
+
     public Texture GetTextureFromState(State state)
     {
         switch (state)
@@ -190,7 +216,7 @@ public class TicTacToe : MonoBehaviour
     }
     public void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0)) 
+        if (Input.GetKeyDown(KeyCode.Mouse0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
@@ -199,13 +225,21 @@ public class TicTacToe : MonoBehaviour
             plane.Raycast(ray, out dist);
             var intersectPos = ray.GetPoint(dist);
             var coord = new Vector2Int(Mathf.RoundToInt(intersectPos.x), Mathf.RoundToInt(intersectPos.y));
-            
+
             Debug.Log(coord);
             if (coord.x < 0 || coord.x >= GridSize || coord.y < 0 || coord.y >= GridSize)
                 return;
-            if(SetCell(this.gameState.playerTurn, coord.x, coord.y)) 
+            if (SetCell(this.gameState.playerTurn, coord.x, coord.y))
             {
-                Debug.Log(CheckEnd());
+                var victoryState = CheckVictory();
+                if (!CheckVictory().Item1)
+                {
+                    CheckNullMatch();
+                }
+                else
+                {
+                    this.victory?.Invoke(victoryState.Item2);
+                }
                 this.gameState.NextTurn();
             }
         }
