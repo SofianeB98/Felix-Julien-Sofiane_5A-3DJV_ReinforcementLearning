@@ -12,20 +12,22 @@ namespace Sokoban
         IAction moveLeft = new MoveAction(Vector2Int.left);
         IAction moveRight = new MoveAction(Vector2Int.right);
         public GameObject Player;
-
+        public List<IAction> actions;
+      
         void Start()
         {
+            this.actions = new List<IAction>();
+            actions.Add(moveUp);
+            actions.Add(moveDown);
+            actions.Add(moveLeft);
+            actions.Add(moveRight);
+            
             var grid = LoadLevel();
-            this.gameState = new SokobanGameState(grid.Item1, grid.Item2);
-            GameStateComparer comparer = new GameStateComparer();
-            Dictionary<SokobanGameState, float> dic = new Dictionary<SokobanGameState, float>(comparer);
-            dic.Add(this.gameState, 0);
-            var clone = this.gameState.Clone();
-            clone.Grid[0, 0].state = State.Walkable;
-            dic.Add(clone, 1);
-            Debug.Log(dic[clone]);
-            Debug.Log(dic[this.gameState]);
-            Debug.Log(dic.Count);
+            this.gameState = new SokobanGameState(grid.Item1, grid.Item2, actions);
+            this.gameState.GetAvailableActions().ForEach(x =>
+            {
+                Debug.Log(x.DebugAction());
+            });
 
         }
 
@@ -78,8 +80,6 @@ namespace Sokoban
                     Mathf.RoundToInt(item.transform.position.y)
                     );
                 var t = new Tile(pos, State.Unwalkable, item);
-                Debug.Log(pos);
-                Debug.Log(grid.GetLength(0));
                 grid[pos.x, pos.y] = t;
             }
 

@@ -114,15 +114,16 @@ namespace Sokoban
         public Tile[,] Grid;
         public Vector2Int playerPosition;
         public List<Bloc> blocs;
-
+        public List<IAction> allActions;
         public (int, int) GridSize
         {
             get { return (Grid.GetLength(0), Grid.GetLength(1)); }
         }
 
 
-        public SokobanGameState(Tile[,] grid, List<Bloc> blocs)
+        public SokobanGameState(Tile[,] grid, List<Bloc> blocs, List<IAction> allActions)
         {
+            this.allActions = allActions;
             // Required for initialization
             this.Grid = grid;
             this.playerPosition = (from Tile item in this.Grid where item.state == State.Player select item).FirstOrDefault().position;
@@ -155,6 +156,20 @@ namespace Sokoban
             return true;
         }
 
+        public List<IAction> GetAvailableActions() 
+        {
+            List<IAction> actions = new List<IAction>();
+            
+            foreach(var item in allActions) 
+            {
+                if (item.IsAvailable(this)) 
+                {
+                    actions.Add(item);
+                }
+            }
+            return actions;
+        }
+
         public SokobanGameState Clone() 
         {
             var gs = new SokobanGameState();
@@ -172,6 +187,7 @@ namespace Sokoban
                 }
             }
             gs.playerPosition = playerPosition;
+            gs.allActions = this.allActions;
             return gs;
         }
 

@@ -7,6 +7,9 @@ namespace Sokoban
     public interface IAction
     {
         public void Perform(ref SokobanGameState gameState);
+        bool IsAvailable(SokobanGameState gameState);
+
+        object DebugAction();
     }
 
     public class MoveAction : IAction
@@ -58,6 +61,31 @@ namespace Sokoban
                 case State.Unwalkable:
                     break;
 
+            }
+        }
+
+        public bool IsAvailable(SokobanGameState gameState) 
+        {
+            var pos = gameState.playerPosition + direction;
+            var t = gameState.Grid[pos.x, pos.y];
+            switch (t.state)
+            {
+                case State.Walkable:
+                    return true;
+                case State.Objective:
+                    return true;
+                case State.Unwalkable | State.ObjectiveAccomplish:
+                    return false;
+                case State.Bloc:
+                    var nextPos = pos + direction;
+                    var nextTile = gameState.Grid[nextPos.x, nextPos.y];
+                    if(nextTile.state == State.Objective || nextTile.state == State.Walkable) 
+                    {
+                        return true;
+                    }
+                    return false;
+                default:
+                    return false;
             }
         }
 
@@ -116,6 +144,11 @@ namespace Sokoban
                     return false;
             }
             return true;
+        }
+
+        public object DebugAction()
+        {
+            return this.direction;
         }
     }
 }
