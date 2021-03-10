@@ -55,7 +55,7 @@ public class TicTacToe : MonoBehaviour
         [System.Serializable]
         public struct Tile
         {
-            public GameObject visual;
+            //public GameObject visual;
             public State state;
 
             public static bool operator ==(Tile a, State s)
@@ -70,7 +70,7 @@ public class TicTacToe : MonoBehaviour
 
             public Tile(GameObject visual, State s)
             {
-                this.visual = visual;
+                //this.visual = visual;
                 this.state = s;
             }
 
@@ -80,15 +80,17 @@ public class TicTacToe : MonoBehaviour
             }
         }
         
-        public GameState(GameObject tilePrefab, Transform parent)
+        public GameState(GameObject tilePrefab, Transform parent, out GameObject[,] visualGrid)
         {
             // Initialize Grid wit Neutral state
             this.Grid = new Tile[GridSize, GridSize];
+            visualGrid = new GameObject[GridSize, GridSize];
             for (int i = 0; i < GridSize; i++)
             {
                 for (int j = 0; j < GridSize; j++)
                 {
                     GameObject go = GameObject.Instantiate(tilePrefab, new Vector3(i, j, 0), Quaternion.identity, parent);
+                    visualGrid[i, j] = go;
                     this.Grid[i, j] = new Tile(go, State.NEUTRAL);
                 }
             }
@@ -105,7 +107,7 @@ public class TicTacToe : MonoBehaviour
             {
                 for (int j = 0; j < Grid.GetLength(1); j++)
                 {
-                    Grid[i,j] = new Tile(g[i,j].visual, g[i,j].state);
+                    Grid[i,j] = new Tile(null/*g[i,j].visual*/, g[i,j].state);
                 }
             }
             
@@ -145,7 +147,8 @@ public class TicTacToe : MonoBehaviour
     public int playerTurn;
 
     public AgentTicTacToe agent;
-    
+
+    public GameObject[,] visualGrid;
     
     public bool SetCell(int playerTurn, int x, int y)
     {
@@ -153,7 +156,8 @@ public class TicTacToe : MonoBehaviour
         //if (this.gameState.GetAvailableCell().Contains((x, y)))
         {
             this.gameState.Grid[x, y].SetState(state); //= new GameState.Tile(null, State.CROSS); //
-            this.gameState.Grid[x, y].visual.GetComponent<Renderer>().material.mainTexture = GetTextureFromState(state);
+            //this.gameState.Grid[x, y].visual.GetComponent<Renderer>().material.mainTexture = GetTextureFromState(state);
+            visualGrid[x, y].GetComponent<Renderer>().material.mainTexture = GetTextureFromState(state);
             return true;
         }
         //else
@@ -183,13 +187,13 @@ public class TicTacToe : MonoBehaviour
     
     public void Initialize()
     {
-        this.gameState = new GameState(this.tilePrefab, this.gameObject.transform);
+        this.gameState = new GameState(this.tilePrefab, this.gameObject.transform, out visualGrid);
         this.agent = new AgentTicTacToe();
         agent.ticTacToe = this;
         agent.policy = new Dictionary<GameState, Vector2Int>();
         
         
-        agent.Simulate(ref this.gameState);
+        agent.Simulate(ref this.gameState, 100);
     }
 
     public bool CheckNullMatch(ref GameState gs)
