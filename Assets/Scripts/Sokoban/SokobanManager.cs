@@ -24,6 +24,7 @@ namespace Sokoban
             clone.Grid[0, 0].state = State.Walkable;
             dic.Add(clone, 1);
             Debug.Log(dic[clone]);
+            Debug.Log(dic[this.gameState]);
             Debug.Log(dic.Count);
 
         }

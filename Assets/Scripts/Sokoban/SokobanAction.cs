@@ -84,6 +84,7 @@ namespace Sokoban
                         if (bloc.position == item.position)
                         {
                             item.state = State.ObjectiveAccomplish;
+                            break;
                         }
                     }
                 }
@@ -95,6 +96,7 @@ namespace Sokoban
                         if(item.position == bloc.position)
                         {
                             test = true;
+                            break;
                         }
                     }
                     if (!test)
