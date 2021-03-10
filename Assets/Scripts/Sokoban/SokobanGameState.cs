@@ -226,26 +226,55 @@ namespace Sokoban
             return gs;
         }
 
+        int GetRemainingObjectif()
+        {
+            int remainingObjective = 0;
+            for(int i = 0; i < Grid.GetLength(0); i++)
+            {
+                for(int j = 0; j < Grid.GetLength(1); j++) 
+                {
+                    if(Grid[i, j].state == State.Objective) 
+                    {
+                        remainingObjective++;
+                    }
+                }
+            }
+            return remainingObjective;
+        }
+
+        
+
         public bool CheckGameOver()
         {
+            int caisseBloque = 0;
+            int objectifRestant = GetRemainingObjectif();
             foreach (var item in this.caisses)
             {
+                // Si la caisse valide un objectif, on la passe. (Même si elle est bloquée, elle est valide)
+                if (Grid[item.position.x, item.position.y].state == State.ObjectiveAccomplish)
+                    continue;
                 var pos = item.position;
-
+                // Check de tous les déplacements possibles
                 bool[] movement = new bool[4];
                 movement[0] = item.CanMoveInDirection(new Vector2Int(-1, 0), this);
                 movement[1] = item.CanMoveInDirection(new Vector2Int(0, 1), this);
                 movement[2] = item.CanMoveInDirection(new Vector2Int(1, 0), this);
                 movement[3] = item.CanMoveInDirection(new Vector2Int(0, -1), this);
 
+                
                 for (int i = 0; i < movement.Length; i++)
-                {
+                {  
                     if (!movement[i] && !movement[(i + 1) % 4])
                     {
-                        return true;
+                        caisseBloque++;
+                        break;
                     }
                 }
             }
+            var caisseOk = this.caisses.Count - caisseBloque;
+            // Game Over si il ne reste plus assez de caisse pouvant se déplacer
+            if (caisseOk < objectifRestant)
+                return true;
             return false;
         }
     }
