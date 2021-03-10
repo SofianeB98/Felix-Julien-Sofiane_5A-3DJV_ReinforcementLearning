@@ -83,7 +83,9 @@ namespace Sokoban
                     return true;
                 case State.Objective:
                     return true;
-                case State.Unwalkable | State.ObjectiveAccomplish:
+                case State.Unwalkable:
+                    return false;
+                case State.ObjectiveAccomplish:
                     return false;
                 case State.Caisse:
                     var nextPos = pos + direction;
