@@ -35,7 +35,9 @@ namespace Sokoban
                             {
                                 gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = State.Walkable;
                                 gameState.blocs[i].Move(direction);
+                                gameState.Grid[gameState.blocs[i].position.x, gameState.blocs[i].position.y].state = State.Bloc;
                                 gameState.playerPosition = nextPos;
+                                gameState.Grid[nextPos.x, nextPos.y].state = State.Player;
                                 var blocPos = gameState.blocs[i].position;
                                 CheckObjectif(ref gameState);
 
@@ -51,6 +53,7 @@ namespace Sokoban
                 case State.Walkable:
                     gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = State.Walkable;
                     gameState.playerPosition += direction;
+                    gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = State.Player;
                     break;
                 case State.Unwalkable:
                     break;
