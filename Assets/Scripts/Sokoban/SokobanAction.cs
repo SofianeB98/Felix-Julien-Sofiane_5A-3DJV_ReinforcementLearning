@@ -10,8 +10,6 @@ namespace Sokoban
         bool IsAvailable(SokobanGameState gameState);
 
         object DebugAction();
-
-        bool IsEqual(IAction action);
         
     }
 
@@ -164,5 +162,6 @@ namespace Sokoban
             }
             return false;
         }
+
     }
 }
