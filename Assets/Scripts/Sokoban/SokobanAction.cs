@@ -44,7 +44,7 @@ namespace Sokoban
                                 var blocPos = gameState.caisses[i].position;
                                 CheckObjectif(ref gameState);
 
-                                if(CheckFinish(ref gameState))
+                                if(gameState.CheckFinish())
                                 {
                                     Debug.Log("FINISH");
                                 }
@@ -134,16 +134,6 @@ namespace Sokoban
                 }
             }
                 
-        }
-
-        bool CheckFinish(ref SokobanGameState gs)
-        {
-            foreach(var item in gs.Grid)
-            {
-                if (item.state == State.Objective)
-                    return false;
-            }
-            return true;
         }
 
         public object DebugAction()

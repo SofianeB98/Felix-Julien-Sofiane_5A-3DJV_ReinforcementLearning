@@ -160,6 +160,9 @@ namespace Sokoban
 
         public List<IAction> GetAvailableActions() 
         {
+            if(CheckFinish())
+                return new List<IAction>();
+            
             List<IAction> actions = new List<IAction>();
             
             foreach(var item in allActions) 
@@ -172,6 +175,16 @@ namespace Sokoban
             return actions;
         }
 
+        public bool CheckFinish()
+        {
+            foreach(var item in Grid)
+            {
+                if (item.state == State.Objective)
+                    return false;
+            }
+            return true;
+        }
+        
         public SokobanGameState Clone() 
         {
             var gs = new SokobanGameState();
