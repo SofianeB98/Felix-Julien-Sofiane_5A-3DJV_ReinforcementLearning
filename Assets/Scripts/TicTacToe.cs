@@ -149,9 +149,14 @@ public class TicTacToe : MonoBehaviour
     public int playerTurn = 0;
 
     public AgentTicTacToe agent;
-
     public GameObject[,] visualGrid;
 
+    [Header("Agent Parameter")] 
+    [SerializeField] private int episodeCount = 1000;
+    [SerializeField, Range(0.0f, 1.0f)] private float epsilonGreedy = 0.3f;
+    [SerializeField] private bool useFirstVisit = false;
+    [SerializeField] private bool useOnPolicy = false;
+    
     public bool SetCell(int playerTurn, int x, int y)
     {
         var state = PlayerNumberToState(playerTurn);
@@ -195,7 +200,7 @@ public class TicTacToe : MonoBehaviour
         agent.policy = new Dictionary<GameState, Vector2Int>();
 
 
-        agent.Simulate(ref this.gameState, 1000);
+        agent.Simulate(ref this.gameState, episodeCount, useFirstVisit, useOnPolicy, epsilonGreedy);
 
         StartCoroutine(GameController());
     }

@@ -55,6 +55,7 @@ public class AgentTicTacToe
         {
             List<TicTacToe.GameState> currentGameStatesEpisodes =
                 new List<TicTacToe.GameState>();
+            
             List<TicTacToe.GameState> ProcessedEpisodes =
                 new List<TicTacToe.GameState>();
             
@@ -79,43 +80,44 @@ public class AgentTicTacToe
                 
                 var currentGS = currentGameStatesEpisodes[t];
                 
-                
-                
-                // var contains = explored.Contains(
-                //     explored.FirstOrDefault(x => x.Grid.Equals(strct.Grid))
-                // );
-
-                var indexOfCurrentGS =
-                    GetIndexOf(ref exploredGameStates,
-                        ref currentGS.Grid); //explored.FindIndex(x => x.Grid == strct.Grid);
-
-                //if(!ProcessedEpisodes.Contains(truc))
-                // On fait ce qui a apres
-                
-                if (indexOfCurrentGS >= 0)
+                //Est ce que l'episode a deja ete traite ?
+                //Si non on le traite
+                //Si oui on zap
+                if (GetIndexOf(ref ProcessedEpisodes, ref currentGS.Grid) == -1)
                 {
-                    // On incrémente celui deja existant
+                    var indexOfCurrentGS =
+                        GetIndexOf(ref exploredGameStates,
+                            ref currentGS.Grid); //explored.FindIndex(x => x.Grid == strct.Grid);
+                
+                    if (indexOfCurrentGS >= 0)
+                    {
+                        // On incrémente celui deja existant
 
-                    currentGS = exploredGameStates[indexOfCurrentGS];
+                        currentGS = exploredGameStates[indexOfCurrentGS];
 
-                    currentGS.SetReturns(currentGS.Returns + G);
-                    currentGS.SetN(currentGS.N + 1);
+                        currentGS.SetReturns(currentGS.Returns + G);
+                        currentGS.SetN(currentGS.N + 1);
 
-                    //explored[idx].SetReturns(explored[idx].Returns + G);
-                    //explored[idx].SetN(explored[idx].N + 1);
+                        //explored[idx].SetReturns(explored[idx].Returns + G);
+                        //explored[idx].SetN(explored[idx].N + 1);
 
-                    exploredGameStates[indexOfCurrentGS] = currentGS;
+                        exploredGameStates[indexOfCurrentGS] = currentGS;
+                    }
+                    else
+                    {
+                        //Sinon on incrément celui qui existe pas et on l'ajoute
+                        currentGS.SetReturns(currentGS.Returns + G);
+                        currentGS.SetN(currentGS.N + 1);
+
+                        currentGameStatesEpisodes[t] = currentGS;
+
+                        exploredGameStates.Add(currentGS);
+                    }
+                    
+                    ProcessedEpisodes.Add(currentGS);
                 }
-                else
-                {
-                    //Sinon on incrément celui qui existe pas et on l'ajoute
-                    currentGS.SetReturns(currentGS.Returns + G);
-                    currentGS.SetN(currentGS.N + 1);
-
-                    currentGameStatesEpisodes[t] = currentGS;
-
-                    exploredGameStates.Add(currentGS);
-                }
+                
+                
             }
 
             if (isOnPolicy)
@@ -127,6 +129,41 @@ public class AgentTicTacToe
                 //     policyGS.Key.SetN(e.N);
                 //     policyGS.Key.SetReturns(e.Returns);
                 // }
+                
+                foreach (var k in policy.Keys)
+                {
+                    var availableCells = k.GetAvailableCells();
+
+                    float best = 0.0f;
+                    (int, int) bestAction = (policy[k].x, policy[k].y);
+
+                    foreach (var act in availableCells)
+                    {
+                        var copy = k.Clone();
+
+                        // TicTacToe.GameState.Tile[,] tmpGrid = k.Grid.Clone() as TicTacToe.GameState.Tile[,];
+                        // tmpGrid[act.Item1, act.Item2].SetState(TicTacToe.State.CIRCLE);
+
+                        ticTacToe.SetCellWithoutChangeGraphics(1, act.Item1, act.Item2, ref copy);
+
+                        var indexOfActionsInExplored = GetIndexOf(ref exploredGameStates, ref copy.Grid);
+
+                        if (indexOfActionsInExplored >= 0)
+                        {
+                            float Vs = exploredGameStates[indexOfActionsInExplored].Returns /
+                                       exploredGameStates[indexOfActionsInExplored].N;
+
+                            if (Vs > best)
+                            {
+                                best = Vs;
+                                bestAction = act;
+                                //policy[k] = new Vector2Int(act.Item1, act.Item2);
+                            }
+                        }
+                    }
+
+                    policy[k].Set(bestAction.Item1, bestAction.Item2);
+                }
             }
 
 
@@ -268,6 +305,40 @@ public class AgentTicTacToe
                 //     policyGS.Key.SetN(e.N);
                 //     policyGS.Key.SetReturns(e.Returns);
                 // }
+                foreach (var k in policy.Keys)
+                {
+                    var availableCells = k.GetAvailableCells();
+
+                    float best = 0.0f;
+                    (int, int) bestAction = (policy[k].x, policy[k].y);
+
+                    foreach (var act in availableCells)
+                    {
+                        var copy = k.Clone();
+
+                        // TicTacToe.GameState.Tile[,] tmpGrid = k.Grid.Clone() as TicTacToe.GameState.Tile[,];
+                        // tmpGrid[act.Item1, act.Item2].SetState(TicTacToe.State.CIRCLE);
+
+                        ticTacToe.SetCellWithoutChangeGraphics(1, act.Item1, act.Item2, ref copy);
+
+                        var indexOfActionsInExplored = GetIndexOf(ref exploredGameStates, ref copy.Grid);
+
+                        if (indexOfActionsInExplored >= 0)
+                        {
+                            float Vs = exploredGameStates[indexOfActionsInExplored].Returns /
+                                       exploredGameStates[indexOfActionsInExplored].N;
+
+                            if (Vs > best)
+                            {
+                                best = Vs;
+                                bestAction = act;
+                                //policy[k] = new Vector2Int(act.Item1, act.Item2);
+                            }
+                        }
+                    }
+
+                    policy[k].Set(bestAction.Item1, bestAction.Item2);
+                }
             }
 
 
