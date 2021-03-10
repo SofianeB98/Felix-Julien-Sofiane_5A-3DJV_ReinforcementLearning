@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System;
 namespace Sokoban
 {
-    public interface IAction
+    public interface IAction : IEquatable<IAction>
     {
         bool Perform(ref SokobanGameState gameState);
         bool IsAvailable(SokobanGameState gameState);
@@ -149,19 +149,18 @@ namespace Sokoban
             return this.direction;
         }
 
-        public override bool Equals(object obj)
+        public bool Equals(IAction obj)
         {
-            if(!(obj is MoveAction)) 
+            if (!(obj is MoveAction))
             {
                 return false;
             }
             var m = obj as MoveAction;
-            if(this.direction == m.direction)
+            if (this.direction == m.direction)
             {
                 return true;
             }
             return false;
         }
-
     }
 }
