@@ -47,9 +47,12 @@ namespace Sokoban
         // Donc on set la nouvelle action dans le temp, et on reset sont q_sa, et on accroit
         // Ce qui nous donne, pour 1 meme GS donnee, 4 Action maximum, et on prend la meilleure
         
-        public void Init(ref SokobanGameState gs, ref List<IAction> allActions)
+        public void Init(ref SokobanGameState gs, ref List<IAction> allActions, Algo agent)
         {
+            this.algo = agent;
+            
             policy = new Dictionary<SokobanGameState, IAction>(gameStateComparer);
+            
             Simulate(ref gs, ref allActions);
         }
 
@@ -137,6 +140,8 @@ namespace Sokoban
                     s = sPrime;
                     a = aPrime;
                 }
+                
+                // Mettre a jour la policy
 
             }
         }

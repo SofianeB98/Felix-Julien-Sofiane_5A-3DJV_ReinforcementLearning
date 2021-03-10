@@ -13,7 +13,9 @@ namespace Sokoban
         IAction moveRight = new MoveAction(Vector2Int.right);
         public GameObject Player;
         public List<IAction> actions;
-      
+
+        private SokobanAgent agent = new SokobanAgent();
+        
         void Start()
         {
             this.actions = new List<IAction>();
@@ -28,7 +30,10 @@ namespace Sokoban
             {
                 Debug.Log(x.DebugAction());
             });
-
+            
+            
+            agent.Init(ref gameState, ref actions, SokobanAgent.Algo.Sarsa);
+            
         }
 
         public (Tile[,], List<Caisse>) LoadLevel()
