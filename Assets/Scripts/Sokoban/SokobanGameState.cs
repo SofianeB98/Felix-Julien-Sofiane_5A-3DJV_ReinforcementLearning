@@ -15,7 +15,7 @@ namespace Sokoban
         Player
     }
 
-    class GameStateComparer : EqualityComparer<SokobanGameState> 
+    class GameStateComparer : EqualityComparer<SokobanGameState>
     {
         public override bool Equals(SokobanGameState a, SokobanGameState b)
         {
@@ -45,7 +45,7 @@ namespace Sokoban
         }
     }
 
-    public class Caisse 
+    public class Caisse
     {
         public GameObject visual;
         public Vector2Int position;
@@ -74,6 +74,26 @@ namespace Sokoban
                 return false;
             return true;
         }
+
+        public bool CanMoveInDirection(Vector2Int direction, SokobanGameState gs)
+        {
+            var newPos = this.position + direction;
+            switch (gs.Grid[newPos.x, newPos.y].state)
+            {
+                case State.Walkable:
+                    return true;
+                case State.Caisse:
+                    return false;
+                case State.Objective:
+                    return true;
+                case State.ObjectiveAccomplish:
+                    return false;
+                case State.Unwalkable:
+                    return false;
+                default:
+                    return false;
+            }
+        }
     }
 
     [System.Serializable]
@@ -87,7 +107,7 @@ namespace Sokoban
             this.position = position;
             this.state = state;
             this.visual = visual;
-            
+
         }
 
         public Tile Clone()
@@ -116,7 +136,7 @@ namespace Sokoban
         public List<Caisse> caisses;
 
         public List<IAction> allActions;
-        
+
         public float r = 0.0f;
 
         public (int, int) GridSize
@@ -139,18 +159,18 @@ namespace Sokoban
         public override bool Equals(object obj)
         {
             var gs = obj as SokobanGameState;
-            for(int i = 0; i < Grid.GetLength(0); i++)
+            for (int i = 0; i < Grid.GetLength(0); i++)
             {
-                for(int j = 0; j < Grid.GetLength(1); j++) 
+                for (int j = 0; j < Grid.GetLength(1); j++)
                 {
-                    if(!Grid[i, j].Equals(gs.Grid[i, j]))
+                    if (!Grid[i, j].Equals(gs.Grid[i, j]))
                     {
                         return false;
                     }
                 }
             }
 
-            for(int i = 0; i < caisses.Count; i++) 
+            for (int i = 0; i < caisses.Count; i++)
             {
                 if (!caisses[i].Equals(gs.caisses[i]))
                     return false;
@@ -158,16 +178,16 @@ namespace Sokoban
             return true;
         }
 
-        public List<IAction> GetAvailableActions() 
+        public List<IAction> GetAvailableActions()
         {
-            if(CheckFinish())
+            if (CheckFinish())
                 return new List<IAction>();
-            
+
             List<IAction> actions = new List<IAction>();
-            
-            foreach(var item in allActions) 
+
+            foreach (var item in allActions)
             {
-                if (item.IsAvailable(this)) 
+                if (item.IsAvailable(this))
                 {
                     actions.Add(item);
                 }
@@ -177,26 +197,26 @@ namespace Sokoban
 
         public bool CheckFinish()
         {
-            foreach(var item in Grid)
+            foreach (var item in Grid)
             {
                 if (item.state == State.Objective)
                     return false;
             }
             return true;
         }
-        
-        public SokobanGameState Clone() 
+
+        public SokobanGameState Clone()
         {
             var gs = new SokobanGameState();
             gs.caisses = new List<Caisse>();
-            foreach(var item in this.caisses)
+            foreach (var item in this.caisses)
             {
                 gs.caisses.Add(item.Clone());
             }
             gs.Grid = new Tile[Grid.GetLength(0), Grid.GetLength(1)];
-            for(int i = 0; i < Grid.GetLength(0); i++)
+            for (int i = 0; i < Grid.GetLength(0); i++)
             {
-                for (int j = 0; j < Grid.GetLength(1); j++) 
+                for (int j = 0; j < Grid.GetLength(1); j++)
                 {
                     gs.Grid[i, j] = Grid[i, j].Clone();
                 }
@@ -204,6 +224,29 @@ namespace Sokoban
             gs.playerPosition = playerPosition;
             gs.allActions = this.allActions;
             return gs;
+        }
+
+        public bool CheckGameOver()
+        {
+            foreach (var item in this.caisses)
+            {
+                var pos = item.position;
+
+                bool[] movement = new bool[4];
+                movement[0] = item.CanMoveInDirection(new Vector2Int(-1, 0), this);
+                movement[1] = item.CanMoveInDirection(new Vector2Int(0, 1), this);
+                movement[2] = item.CanMoveInDirection(new Vector2Int(1, 0), this);
+                movement[3] = item.CanMoveInDirection(new Vector2Int(0, -1), this);
+
+                for (int i = 0; i < movement.Length; i++)
+                {
+                    if (!movement[i] && !movement[(i + 1) % 4])
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }
