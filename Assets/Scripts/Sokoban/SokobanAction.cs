@@ -10,6 +10,9 @@ namespace Sokoban
         bool IsAvailable(SokobanGameState gameState);
 
         object DebugAction();
+
+        bool IsEqual(IAction action);
+        
     }
 
     public class MoveAction : IAction
@@ -146,6 +149,20 @@ namespace Sokoban
         public object DebugAction()
         {
             return this.direction;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is MoveAction)) 
+            {
+                return false;
+            }
+            var m = obj as MoveAction;
+            if(this.direction == m.direction)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

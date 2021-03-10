@@ -15,28 +15,24 @@ namespace Sokoban
         Player
     }
 
+    class GameStateActionComparer : EqualityComparer<(SokobanGameState, IAction)>
+    {
+        public override bool Equals((SokobanGameState, IAction) a, (SokobanGameState, IAction) b)
+        {
+            return a.Item1.Equals(b.Item1) && a.Item2.Equals(b.Item2);
+        }
+
+        public override int GetHashCode((SokobanGameState, IAction) gs)
+        {
+            return base.GetHashCode();
+        }
+    }
+
     class GameStateComparer : EqualityComparer<SokobanGameState>
     {
         public override bool Equals(SokobanGameState a, SokobanGameState b)
         {
-            Debug.Log("Compare");
-            for (int i = 0; i < a.Grid.GetLength(0); i++)
-            {
-                for (int j = 0; j < b.Grid.GetLength(1); j++)
-                {
-                    if (!a.Grid[i, j].Equals(b.Grid[i, j]))
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            for (int i = 0; i < a.caisses.Count; i++)
-            {
-                if (!a.caisses[i].Equals(b.caisses[i]))
-                    return false;
-            }
-            return true;
+            return a.Equals(b);
         }
 
         public override int GetHashCode(SokobanGameState gs)
