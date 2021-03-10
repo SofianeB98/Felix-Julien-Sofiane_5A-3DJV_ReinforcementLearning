@@ -125,7 +125,7 @@ namespace Sokoban
         }
 
 
-        public SokobanGameState(Tile[,] grid, List<Caisse> blocs, List<IAction> allActions)
+        public SokobanGameState(Tile[,] grid, List<Caisse> caisses, List<IAction> allActions)
         {
             this.allActions = allActions;
             // Required for initialization

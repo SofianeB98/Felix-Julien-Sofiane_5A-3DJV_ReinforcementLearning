@@ -50,20 +50,21 @@ namespace Sokoban
         public void Init(ref SokobanGameState gs, ref List<IAction> allActions)
         {
             policy = new Dictionary<SokobanGameState, IAction>(gameStateComparer);
+            Simulate(ref gs, ref allActions);
         }
 
-        public void Simulate()
+        public void Simulate(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 3)
         {
             switch (algo)
             {
                 case Algo.Sarsa:
-                    
+                    Simulate_SARSA(ref gs, ref allActions);
                     break;
             }
         }
 
         // Appeler pour SARSA
-        private void Simulate_SARSA(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 10)
+        private void Simulate_SARSA(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 3)
         {
             for (int e = 0; e < episodeCount; e++)
             {
@@ -75,23 +76,6 @@ namespace Sokoban
                 var availableActions = s.GetAvailableActions();
                 var a = availableActions[Random.Range(0, availableActions.Count)];
                 
-                // var gridToTest =
-                //     GetIndexOf(ref test,
-                //         ref clone.Grid); //policy.Any(x => x.Key.Grid == clone.Grid);//policy.ToList().FirstOrDefault(x => x.Key.Grid == clone.Grid).Key;
-                //
-                // if (gridToTest >= 0)
-                // {
-                //     if (Random.Range(0.0f, 1.0f) > epsilonGreedy)
-                //     {
-                //         selectedCell = (policy[policy.ElementAt(gridToTest).Key].x,
-                //             policy[policy.ElementAt(gridToTest).Key].y);
-                //     }
-                // }
-                // else
-                // {
-                //     policy.Add(clone, new Vector2Int(selectedCell.Item1, selectedCell.Item2));
-                // }
-
                 // Point d'interogation la dessus
                 if (policy.ContainsKey(s))
                 {
@@ -108,7 +92,7 @@ namespace Sokoban
                 
                 int iteration = 0;
                 bool gameFinish = false;
-                while (iteration < 100 && !gameFinish)
+                while (iteration < 2 && !gameFinish)
                 {
                     iteration++;
                     
