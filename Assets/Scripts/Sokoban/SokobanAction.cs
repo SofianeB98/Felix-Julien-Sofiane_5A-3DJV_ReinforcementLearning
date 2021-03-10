@@ -6,7 +6,7 @@ namespace Sokoban
 {
     public interface IAction
     {
-        void Perform(ref SokobanGameState gameState);
+        bool Perform(ref SokobanGameState gameState);
         bool IsAvailable(SokobanGameState gameState);
 
         object DebugAction();
@@ -21,12 +21,12 @@ namespace Sokoban
             this.direction = direction;
         }
 
-        public void Perform(ref SokobanGameState gameState)
+        public bool Perform(ref SokobanGameState gameState)
         {
             // Move
             var nextPos = gameState.playerPosition + this.direction;
             var nextTile = gameState.Grid[nextPos.x, nextPos.y];
-
+            var res = false;
             switch (nextTile.state)
             {
                 case State.Caisse:
@@ -42,9 +42,14 @@ namespace Sokoban
                                 gameState.playerPosition = nextPos;
                                 gameState.Grid[nextPos.x, nextPos.y].state = State.Player;
                                 var blocPos = gameState.caisses[i].position;
-                                CheckObjectif(ref gameState);
+                                var caisse = gameState.caisses[i];
+                                if (gameState.Grid[caisse.position.x, caisse.position.y].state == State.Objective)
+                                {
+                                    gameState.Grid[caisse.position.x, caisse.position.y].state = State.ObjectiveAccomplish;
+                                    res = true;
+                                }
 
-                                if(gameState.CheckFinish())
+                                if (gameState.CheckFinish())
                                 {
                                     Debug.Log("FINISH");
                                 }
@@ -61,10 +66,12 @@ namespace Sokoban
                 case State.Unwalkable:
                     break;
 
+
             }
+            return res;
         }
 
-        public bool IsAvailable(SokobanGameState gameState) 
+        public bool IsAvailable(SokobanGameState gameState)
         {
             var pos = gameState.playerPosition + direction;
             var t = gameState.Grid[pos.x, pos.y];
@@ -79,7 +86,7 @@ namespace Sokoban
                 case State.Caisse:
                     var nextPos = pos + direction;
                     var nextTile = gameState.Grid[nextPos.x, nextPos.y];
-                    if(nextTile.state == State.Objective || nextTile.state == State.Walkable) 
+                    if (nextTile.state == State.Objective || nextTile.state == State.Walkable)
                     {
                         return true;
                     }
@@ -116,12 +123,12 @@ namespace Sokoban
                         }
                     }
                 }
-                if(item.state == State.ObjectiveAccomplish) 
+                if (item.state == State.ObjectiveAccomplish)
                 {
                     var test = false;
-                    foreach(var bloc in gs.caisses)
+                    foreach (var bloc in gs.caisses)
                     {
-                        if(item.position == bloc.position)
+                        if (item.position == bloc.position)
                         {
                             test = true;
                             break;
@@ -133,7 +140,7 @@ namespace Sokoban
                     }
                 }
             }
-                
+
         }
 
         public object DebugAction()
