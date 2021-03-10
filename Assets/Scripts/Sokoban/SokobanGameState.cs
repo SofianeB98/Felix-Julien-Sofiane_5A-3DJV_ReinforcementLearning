@@ -35,7 +35,14 @@ namespace Sokoban
         {
             var b = new Bloc(this.position, this.visual);
             return b;
-            
+        }
+
+        public override bool Equals(object obj)
+        {
+            var b = obj as Bloc;
+            if (b.position != this.position)
+                return false;
+            return true;
         }
     }
 
@@ -57,6 +64,16 @@ namespace Sokoban
         {
             var t = new Tile(this.position, this.state, this.visual);
             return t;
+        }
+
+        public override bool Equals(object obj)
+        {
+            var tile = obj as Tile;
+            if (tile.position != this.position)
+                return false;
+            if (tile.state != this.state)
+                return false;
+            return true;
         }
     }
 
@@ -85,6 +102,28 @@ namespace Sokoban
         }
 
         public SokobanGameState() { }
+
+        public override bool Equals(object obj)
+        {
+            var gs = obj as SokobanGameState;
+            for(int i = 0; i < Grid.GetLength(0); i++)
+            {
+                for(int j = 0; j < Grid.GetLength(1); j++) 
+                {
+                    if(!Grid[i, j].Equals(gs.Grid[i, j]))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            for(int i = 0; i < blocs.Count; i++) 
+            {
+                if (!blocs[i].Equals(gs.blocs[i]))
+                    return false;
+            }
+            return true;
+        }
 
         public SokobanGameState Clone() 
         {
