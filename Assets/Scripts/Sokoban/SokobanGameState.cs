@@ -15,6 +15,36 @@ namespace Sokoban
         Player
     }
 
+    class GameStateComparer : EqualityComparer<SokobanGameState> 
+    {
+        public override bool Equals(SokobanGameState a, SokobanGameState b)
+        {
+            Debug.Log("Compare");
+            for (int i = 0; i < a.Grid.GetLength(0); i++)
+            {
+                for (int j = 0; j < b.Grid.GetLength(1); j++)
+                {
+                    if (!a.Grid[i, j].Equals(b.Grid[i, j]))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            for (int i = 0; i < a.blocs.Count; i++)
+            {
+                if (!a.blocs[i].Equals(b.blocs[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        public override int GetHashCode(SokobanGameState gs)
+        {
+            return base.GetHashCode();
+        }
+    }
+
     public class Bloc 
     {
         public GameObject visual;

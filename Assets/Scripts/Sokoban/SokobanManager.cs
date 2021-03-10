@@ -17,6 +17,15 @@ namespace Sokoban
         {
             var grid = LoadLevel();
             this.gameState = new SokobanGameState(grid.Item1, grid.Item2);
+            GameStateComparer comparer = new GameStateComparer();
+            Dictionary<SokobanGameState, float> dic = new Dictionary<SokobanGameState, float>(comparer);
+            dic.Add(this.gameState, 0);
+            var clone = this.gameState.Clone();
+            clone.Grid[0, 0].state = State.Walkable;
+            dic.Add(clone, 1);
+            Debug.Log(dic[clone]);
+            Debug.Log(dic.Count);
+
         }
 
         public (Tile[,], List<Bloc>) LoadLevel()
