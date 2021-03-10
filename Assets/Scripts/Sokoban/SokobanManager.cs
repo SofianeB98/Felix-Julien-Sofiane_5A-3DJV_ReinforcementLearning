@@ -14,6 +14,8 @@ namespace Sokoban
         public GameObject Player;
         public List<IAction> actions;
 
+        public bool playerCanControl = false;
+        
         private SokobanAgent agent = new SokobanAgent();
         
         void Start()
@@ -33,9 +35,28 @@ namespace Sokoban
             
             
             agent.Init(ref gameState, ref actions, SokobanAgent.Algo.Sarsa);
-            
+
+            StartCoroutine(PlayWithIA());
         }
 
+        private IEnumerator PlayWithIA()
+        {
+            int iteration = 0;
+            Debug.Log("Start Playing IA");
+            while (!gameState.CheckFinish() && iteration < 100000)
+            {
+                iteration++;
+                var act = agent.GetBestAction(ref gameState);
+
+                act.Perform(ref this.gameState);
+                UpdatePlayerPosition();
+                UpdateBlocPosition();
+                
+                yield return new WaitForSeconds(0.5f);
+            }
+            yield break;
+        }
+        
         public (Tile[,], List<Caisse>) LoadLevel()
         {
             var walls = GameObject.FindGameObjectsWithTag("Wall");
@@ -145,6 +166,9 @@ namespace Sokoban
 
         public void Update()
         {
+            if (!playerCanControl)
+                return;
+
             if (Input.GetKeyDown(KeyCode.UpArrow))
             {
                 this.moveUp.Perform(ref this.gameState);

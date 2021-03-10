@@ -1,6 +1,6 @@
 using System.Collections;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Sokoban
@@ -27,10 +27,11 @@ namespace Sokoban
         // Q(S, A) = Valeur
         // On associe un couple GS - Action, pour une valeur q
         // Pour l'entrainement
-        public Dictionary<(SokobanGameState, IAction), float> q_sa = new Dictionary<(SokobanGameState, IAction), float>();
+        GameStateActionComparer gameStateActionComparer = new GameStateActionComparer();
+        public Dictionary<(SokobanGameState, IAction), float> q_sa;
 
         public float epsilonGreedy = 0.3f; // entre 0 et 1
-        
+        public int maxIteration = 10000;
         
         // Sarsa peut etre alimenter QSA au fur et a mesure
         // Seul un couple Action State est possible !!!!
@@ -47,27 +48,32 @@ namespace Sokoban
         // Donc on set la nouvelle action dans le temp, et on reset sont q_sa, et on accroit
         // Ce qui nous donne, pour 1 meme GS donnee, 4 Action maximum, et on prend la meilleure
         
+        // Pour Qlearning, ignorer ligne 7, testr toutes les actions possible et garde le q(s', a') maximum pour le calcule
+        
         public void Init(ref SokobanGameState gs, ref List<IAction> allActions, Algo agent)
         {
             this.algo = agent;
             
+            q_sa = new Dictionary<(SokobanGameState, IAction), float>(gameStateActionComparer);
             policy = new Dictionary<SokobanGameState, IAction>(gameStateComparer);
             
-            Simulate(ref gs, ref allActions);
+            Simulate(ref gs, ref allActions, 0.1f, 0.9f, 1000);
         }
 
-        public void Simulate(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 3)
+        public void Simulate(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 10)
         {
             switch (algo)
             {
                 case Algo.Sarsa:
-                    Simulate_SARSA(ref gs, ref allActions);
+                    Simulate_SARSA(ref gs, ref allActions, alpha, gamma, episodeCount);
                     break;
             }
         }
+        
+
 
         // Appeler pour SARSA
-        private void Simulate_SARSA(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 3)
+        private void Simulate_SARSA(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 10)
         {
             for (int e = 0; e < episodeCount; e++)
             {
@@ -95,14 +101,15 @@ namespace Sokoban
                 
                 int iteration = 0;
                 bool gameFinish = false;
-                while (iteration < 2 && !gameFinish)
+                while (iteration < maxIteration && !gameFinish)
                 {
                     iteration++;
                     
                     var sPrime = s.Clone();
-                    a.Perform(ref sPrime);
+                    var objectifComplete = a.Perform(ref sPrime);
                     
-                    gameFinish = sPrime.CheckFinish();
+                    gameFinish = sPrime.CheckFinish(); 
+                    var gameOver = sPrime.CheckGameOver();
                     
                     // Choisir a prime
                     var availableActionsPrime = sPrime.GetAvailableActions();
@@ -128,7 +135,7 @@ namespace Sokoban
                         q_sa.Add((sPrime, aPrime), 0.0f);
                     
                     
-                    sPrime.r = gameFinish ? 100.0f : -1.0f;
+                    sPrime.r = gameFinish ? 1000.0f : objectifComplete ? 10.0f : -1.0f;
                     
                     // Update de Q
                     q_sa[(s, a)] += alpha * sPrime.r + gamma * q_sa[(sPrime, aPrime)] - q_sa[(s, a)];
@@ -142,8 +149,49 @@ namespace Sokoban
                 }
                 
                 // Mettre a jour la policy
+                List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
+                foreach (var key in policy.Keys)
+                {
+                    var common = q_sa.Keys.ToList().FindAll(x => x.Item1.Equals(key));
+                    if (common.Count <= 0)
+                        continue;
 
+                    float bestQ = float.MinValue;
+                    var bestAction = policy[key];
+                    for (int i = 0; i < common.Count; i++)
+                    {
+                        if (q_sa[common[i]] > bestQ)
+                        {
+                            bestQ = q_sa[common[i]];
+                            bestAction = common[i].Item2;
+                        }
+                    }
+
+                    //policy[key] = bestAction;
+                    newActions.Add((key, bestAction));
+                }
+
+                foreach (var act in newActions)
+                {
+                    policy[act.Item1] = act.Item2;
+                }
+                
             }
+        }
+
+        public IAction GetBestAction(ref SokobanGameState gs)
+        {
+            if (policy.ContainsKey(gs))
+            {
+                Debug.Log("Yes je connais cet etat !!!");
+                return policy[gs];
+            }
+
+            Debug.Log("Cet etat ne fait pas parti de ma policy bande de fou !");
+            
+            var available = gs.GetAvailableActions();
+
+            return available[Random.Range(0, available.Count)];
         }
     }
 }
