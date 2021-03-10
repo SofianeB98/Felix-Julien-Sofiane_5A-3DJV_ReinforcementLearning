@@ -130,7 +130,8 @@ public class AgentGridWorld
         {
             delta = 0.0f;
             iteration++;
-
+            Debug.Log(iteration);
+            
             for (int i = 0; i < allStates.GetLength(0); i++)
             {
                 for (int j = 0; j < allStates.GetLength(1); j++)

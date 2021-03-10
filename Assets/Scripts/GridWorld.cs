@@ -188,7 +188,7 @@ public class GridWorld : MonoBehaviour
         // Cration du visuel de l'agent
         this.agentGridWorld.visual = Instantiate(agentPrefab, new Vector3(this.agentGridWorld.actualState.x, this.agentGridWorld.actualState.y, 0.0f), Quaternion.identity);
 
-        //this.agent.ValueIteration(ref grid);
+        //this.agentGridWorld.ValueIteration(ref grid);
         StartCoroutine(UpdateWorld());
     }
 
