@@ -19,7 +19,18 @@ namespace Sokoban
     {
         public override bool Equals((SokobanGameState, IAction) a, (SokobanGameState, IAction) b)
         {
-            return a.Item1.Equals(b.Item1) && a.Item2.Equals(b.Item2);
+            bool t1 = a.Item1.Equals(b.Item1);
+            bool t2 = false;
+
+            if (a.Item2 == null && b.Item2 == null)
+                t2 = true;
+            else if ((a.Item2 == null && b.Item2 != null) || (a.Item2 != null && b.Item2 == null))
+                t2 = false;
+            else if (a.Item2 != null && b.Item2 != null)
+                t2 = a.Item2.Equals(b.Item2);
+
+                
+            return t1 && t2;
         }
 
         public override int GetHashCode((SokobanGameState, IAction) gs)
@@ -171,6 +182,10 @@ namespace Sokoban
                 if (!caisses[i].Equals(gs.caisses[i]))
                     return false;
             }
+
+            if (!playerPosition.Equals(gs.playerPosition))
+                return false;
+            
             return true;
         }
 
@@ -246,11 +261,11 @@ namespace Sokoban
             int objectifRestant = GetRemainingObjectif();
             foreach (var item in this.caisses)
             {
-                // Si la caisse valide un objectif, on la passe. (Même si elle est bloquée, elle est valide)
+                // Si la caisse valide un objectif, on la passe. (Mï¿½me si elle est bloquï¿½e, elle est valide)
                 if (Grid[item.position.x, item.position.y].state == State.ObjectiveAccomplish)
                     continue;
                 var pos = item.position;
-                // Check de tous les déplacements possibles
+                // Check de tous les dï¿½placements possibles
                 bool[] movement = new bool[4];
                 movement[0] = item.CanMoveInDirection(new Vector2Int(-1, 0), this);
                 movement[1] = item.CanMoveInDirection(new Vector2Int(0, 1), this);
@@ -268,7 +283,7 @@ namespace Sokoban
                 }
             }
             var caisseOk = this.caisses.Count - caisseBloque;
-            // Game Over si il ne reste plus assez de caisse pouvant se déplacer
+            // Game Over si il ne reste plus assez de caisse pouvant se dï¿½placer
             if (caisseOk < objectifRestant)
                 return true;
             return false;

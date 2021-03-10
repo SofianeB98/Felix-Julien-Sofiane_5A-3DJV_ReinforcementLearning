@@ -30,8 +30,8 @@ namespace Sokoban
         GameStateActionComparer gameStateActionComparer = new GameStateActionComparer();
         public Dictionary<(SokobanGameState, IAction), float> q_sa;
 
-        public float epsilonGreedy = 0.3f; // entre 0 et 1
-        public int maxIteration = 10000;
+        private float epsilonGreedy = 0.5f; // entre 0 et 1
+        private int maxIteration = 100;
         
         // Sarsa peut etre alimenter QSA au fur et a mesure
         // Seul un couple Action State est possible !!!!
@@ -50,14 +50,14 @@ namespace Sokoban
         
         // Pour Qlearning, ignorer ligne 7, testr toutes les actions possible et garde le q(s', a') maximum pour le calcule
         
-        public void Init(ref SokobanGameState gs, ref List<IAction> allActions, Algo agent)
+        public void Init(ref SokobanGameState gs, ref List<IAction> allActions, Algo agent, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 50)
         {
             this.algo = agent;
             
             q_sa = new Dictionary<(SokobanGameState, IAction), float>(gameStateActionComparer);
             policy = new Dictionary<SokobanGameState, IAction>(gameStateComparer);
             
-            Simulate(ref gs, ref allActions, 0.1f, 0.9f, 1000);
+            Simulate(ref gs, ref allActions, alpha, gamma, episodeCount);
         }
 
         public void Simulate(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f, float gamma = 0.9f, int episodeCount = 10)
@@ -97,8 +97,6 @@ namespace Sokoban
                     policy.Add(s, a);
                 }
 
-                // Ajouter s et a
-                
                 int iteration = 0;
                 bool gameFinish = false;
                 while (iteration < maxIteration && !gameFinish)
@@ -113,7 +111,7 @@ namespace Sokoban
                     
                     // Choisir a prime
                     var availableActionsPrime = sPrime.GetAvailableActions();
-                    var aPrime = availableActionsPrime.Count > 0 ? availableActions[Random.Range(0, availableActions.Count)] : null;
+                    var aPrime = availableActionsPrime.Count > 0 ? availableActionsPrime[Random.Range(0, availableActionsPrime.Count)] : null;
 
                     if (policy.ContainsKey(sPrime))
                     {
@@ -128,6 +126,7 @@ namespace Sokoban
                     
                     //Ajout a q_sa ou deja contenu donc on incremente
                     //Checker si existant, sinon ajouter
+                    // Ajouter s et a
                     if(!q_sa.ContainsKey((s, a)))
                         q_sa.Add((s, a), 0.0f);
                     
@@ -176,21 +175,27 @@ namespace Sokoban
                     policy[act.Item1] = act.Item2;
                 }
                 
+                Debug.Log($"Episode {e + 1} / {episodeCount} fini");
+                
             }
         }
 
         public IAction GetBestAction(ref SokobanGameState gs)
         {
-            if (policy.ContainsKey(gs))
-            {
-                Debug.Log("Yes je connais cet etat !!!");
-                return policy[gs];
-            }
-
-            Debug.Log("Cet etat ne fait pas parti de ma policy bande de fou !");
             
             var available = gs.GetAvailableActions();
+            
+            if (policy.ContainsKey(gs))
+            {
+                var idx = policy.Keys.ToList().IndexOf(gs);
+                var act = (MoveAction) policy[gs];
+                Debug.Log($"Yes je connais cet etat !!! {act.direction}");
+                return act;
+            }
 
+            
+            Debug.Log("Cet etat ne fait pas parti de ma policy bande de fou !");
+            
             return available[Random.Range(0, available.Count)];
         }
     }

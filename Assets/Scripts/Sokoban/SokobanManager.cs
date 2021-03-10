@@ -34,7 +34,7 @@ namespace Sokoban
             });
             
             
-            agent.Init(ref gameState, ref actions, SokobanAgent.Algo.Sarsa);
+            agent.Init(ref gameState, ref actions, SokobanAgent.Algo.Sarsa, episodeCount: 50);
 
             StartCoroutine(PlayWithIA());
         }
@@ -47,7 +47,7 @@ namespace Sokoban
             {
                 iteration++;
                 var act = agent.GetBestAction(ref gameState);
-
+                
                 act.Perform(ref this.gameState);
                 UpdatePlayerPosition();
                 UpdateBlocPosition();

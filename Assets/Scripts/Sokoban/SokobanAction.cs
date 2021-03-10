@@ -83,18 +83,21 @@ namespace Sokoban
                     return true;
                 case State.Objective:
                     return true;
+                
                 case State.Unwalkable:
                     return false;
+                
                 case State.ObjectiveAccomplish:
                     return false;
+                
                 case State.Caisse:
                     var nextPos = pos + direction;
                     var nextTile = gameState.Grid[nextPos.x, nextPos.y];
                     if (nextTile.state == State.Objective || nextTile.state == State.Walkable)
-                    {
                         return true;
-                    }
+                    
                     return false;
+                
                 default:
                     return false;
             }
