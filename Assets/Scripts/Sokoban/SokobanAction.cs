@@ -39,16 +39,17 @@ namespace Sokoban
                             {
                                 gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = State.Walkable;
                                 gameState.caisses[i].Move(direction);
-                                gameState.Grid[gameState.caisses[i].position.x, gameState.caisses[i].position.y].state = State.Caisse;
-                                gameState.playerPosition = nextPos;
-                                gameState.Grid[nextPos.x, nextPos.y].state = State.Player;
-                                var blocPos = gameState.caisses[i].position;
                                 var caisse = gameState.caisses[i];
                                 if (gameState.Grid[caisse.position.x, caisse.position.y].state == State.Objective)
                                 {
                                     gameState.Grid[caisse.position.x, caisse.position.y].state = State.ObjectiveAccomplish;
                                     res = true;
                                 }
+                                if(gameState.Grid[caisse.position.x, caisse.position.y].state == State.Walkable)
+                                    gameState.Grid[gameState.caisses[i].position.x, gameState.caisses[i].position.y].state = State.Caisse;
+                                gameState.playerPosition = nextPos;
+                                gameState.Grid[nextPos.x, nextPos.y].state = State.Player;
+                                var blocPos = gameState.caisses[i].position;
 
                                 if (gameState.CheckFinish())
                                 {
