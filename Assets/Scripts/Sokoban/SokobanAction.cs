@@ -6,7 +6,7 @@ namespace Sokoban
 {
     public interface IAction
     {
-        public void Perform(ref SokobanGameState gameState);
+        void Perform(ref SokobanGameState gameState);
         bool IsAvailable(SokobanGameState gameState);
 
         object DebugAction();
@@ -29,19 +29,19 @@ namespace Sokoban
 
             switch (nextTile.state)
             {
-                case State.Bloc:
+                case State.Caisse:
                     if (IsWalkableState(TestNextTileAfterBloc(nextPos, ref gameState)))
                     {
-                        for (int i = 0; i < gameState.blocs.Count; i++)
+                        for (int i = 0; i < gameState.caisses.Count; i++)
                         {
-                            if (gameState.blocs[i].position == nextPos)
+                            if (gameState.caisses[i].position == nextPos)
                             {
                                 gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = State.Walkable;
-                                gameState.blocs[i].Move(direction);
-                                gameState.Grid[gameState.blocs[i].position.x, gameState.blocs[i].position.y].state = State.Bloc;
+                                gameState.caisses[i].Move(direction);
+                                gameState.Grid[gameState.caisses[i].position.x, gameState.caisses[i].position.y].state = State.Caisse;
                                 gameState.playerPosition = nextPos;
                                 gameState.Grid[nextPos.x, nextPos.y].state = State.Player;
-                                var blocPos = gameState.blocs[i].position;
+                                var blocPos = gameState.caisses[i].position;
                                 CheckObjectif(ref gameState);
 
                                 if(CheckFinish(ref gameState))
@@ -76,7 +76,7 @@ namespace Sokoban
                     return true;
                 case State.Unwalkable | State.ObjectiveAccomplish:
                     return false;
-                case State.Bloc:
+                case State.Caisse:
                     var nextPos = pos + direction;
                     var nextTile = gameState.Grid[nextPos.x, nextPos.y];
                     if(nextTile.state == State.Objective || nextTile.state == State.Walkable) 
@@ -107,7 +107,7 @@ namespace Sokoban
             {
                 if (item.state == State.Objective)
                 {
-                    foreach (var bloc in gs.blocs)
+                    foreach (var bloc in gs.caisses)
                     {
                         if (bloc.position == item.position)
                         {
@@ -119,7 +119,7 @@ namespace Sokoban
                 if(item.state == State.ObjectiveAccomplish) 
                 {
                     var test = false;
-                    foreach(var bloc in gs.blocs)
+                    foreach(var bloc in gs.caisses)
                     {
                         if(item.position == bloc.position)
                         {

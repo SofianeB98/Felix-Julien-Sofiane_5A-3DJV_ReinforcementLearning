@@ -11,7 +11,7 @@ namespace Sokoban
         Unwalkable,
         Objective,
         ObjectiveAccomplish,
-        Bloc,
+        Caisse,
         Player
     }
 
@@ -31,9 +31,9 @@ namespace Sokoban
                 }
             }
 
-            for (int i = 0; i < a.blocs.Count; i++)
+            for (int i = 0; i < a.caisses.Count; i++)
             {
-                if (!a.blocs[i].Equals(b.blocs[i]))
+                if (!a.caisses[i].Equals(b.caisses[i]))
                     return false;
             }
             return true;
@@ -45,12 +45,12 @@ namespace Sokoban
         }
     }
 
-    public class Bloc 
+    public class Caisse 
     {
         public GameObject visual;
         public Vector2Int position;
 
-        public Bloc(Vector2Int pos, GameObject visual)
+        public Caisse(Vector2Int pos, GameObject visual)
         {
             this.visual = visual;
             this.position = pos;
@@ -61,15 +61,15 @@ namespace Sokoban
             this.position += direction;
         }
 
-        public Bloc Clone()
+        public Caisse Clone()
         {
-            var b = new Bloc(this.position, this.visual);
+            var b = new Caisse(this.position, this.visual);
             return b;
         }
 
         public override bool Equals(object obj)
         {
-            var b = obj as Bloc;
+            var b = obj as Caisse;
             if (b.position != this.position)
                 return false;
             return true;
@@ -113,23 +113,25 @@ namespace Sokoban
         [Header("Game State Data")]
         public Tile[,] Grid;
         public Vector2Int playerPosition;
-        public List<Bloc> blocs;
+        public List<Caisse> caisses;
+
         public List<IAction> allActions;
+        
+        public float r = 0.0f;
+
         public (int, int) GridSize
         {
             get { return (Grid.GetLength(0), Grid.GetLength(1)); }
         }
 
 
-        public SokobanGameState(Tile[,] grid, List<Bloc> blocs, List<IAction> allActions)
+        public SokobanGameState(Tile[,] grid, List<Caisse> blocs, List<IAction> allActions)
         {
             this.allActions = allActions;
             // Required for initialization
             this.Grid = grid;
             this.playerPosition = (from Tile item in this.Grid where item.state == State.Player select item).FirstOrDefault().position;
-            this.blocs = blocs;
-
-            
+            this.caisses = caisses;
         }
 
         public SokobanGameState() { }
@@ -148,9 +150,9 @@ namespace Sokoban
                 }
             }
 
-            for(int i = 0; i < blocs.Count; i++) 
+            for(int i = 0; i < caisses.Count; i++) 
             {
-                if (!blocs[i].Equals(gs.blocs[i]))
+                if (!caisses[i].Equals(gs.caisses[i]))
                     return false;
             }
             return true;
@@ -173,10 +175,10 @@ namespace Sokoban
         public SokobanGameState Clone() 
         {
             var gs = new SokobanGameState();
-            gs.blocs = new List<Bloc>();
-            foreach(var item in this.blocs)
+            gs.caisses = new List<Caisse>();
+            foreach(var item in this.caisses)
             {
-                gs.blocs.Add(item.Clone());
+                gs.caisses.Add(item.Clone());
             }
             gs.Grid = new Tile[Grid.GetLength(0), Grid.GetLength(1)];
             for(int i = 0; i < Grid.GetLength(0); i++)
@@ -190,7 +192,5 @@ namespace Sokoban
             gs.allActions = this.allActions;
             return gs;
         }
-
-       
     }
 }

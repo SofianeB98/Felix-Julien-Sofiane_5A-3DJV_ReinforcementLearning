@@ -31,7 +31,7 @@ namespace Sokoban
 
         }
 
-        public (Tile[,], List<Bloc>) LoadLevel()
+        public (Tile[,], List<Caisse>) LoadLevel()
         {
             var walls = GameObject.FindGameObjectsWithTag("Wall");
             var walkables = GameObject.FindGameObjectsWithTag("Walkable");
@@ -71,7 +71,7 @@ namespace Sokoban
             }
 
             var grid = new Tile[Mathf.RoundToInt(bounds.y) + 1, Mathf.RoundToInt(bounds.w) + 1];
-            var b = new List<Bloc>();
+            var b = new List<Caisse>();
             // Initialize Walls
             foreach (var item in walls)
             {
@@ -101,8 +101,8 @@ namespace Sokoban
                     Mathf.RoundToInt(item.transform.position.x),
                     Mathf.RoundToInt(item.transform.position.y)
                     );
-                grid[pos.x, pos.y].state = State.Bloc;
-                b.Add(new Bloc(pos, item));
+                grid[pos.x, pos.y].state = State.Caisse;
+                b.Add(new Caisse(pos, item));
             }
 
             // Initialise Player
@@ -177,7 +177,7 @@ namespace Sokoban
 
         void UpdateBlocPosition()
         {
-            foreach (var item in this.gameState.blocs)
+            foreach (var item in this.gameState.caisses)
             {
                 item.visual.transform.position = new Vector3(item.position.x, item.position.y, 0);
             }
