@@ -238,6 +238,14 @@ namespace Sokoban
             }
             gs.playerPosition = playerPosition;
             gs.allActions = this.allActions;
+
+            gs.r = r;
+            
+            gs.v = v;
+
+            gs.N = N;
+            gs.Returns = Returns;
+            
             return gs;
         }
 

@@ -30,7 +30,7 @@ namespace Sokoban
         GameStateActionComparer gameStateActionComparer = new GameStateActionComparer();
         public Dictionary<(SokobanGameState, IAction), float> q_sa;
 
-        private float epsilonGreedy = 0.5f; // entre 0 et 1
+        private float epsilonGreedy = 0.6f; // entre 0 et 1
         private int maxIteration = 100;
 
         private float theta = 0.005f;
@@ -54,14 +54,17 @@ namespace Sokoban
         // Pour Qlearning, ignorer ligne 7, testr toutes les actions possible et garde le q(s', a') maximum pour le calcule
 
         public void Init(ref SokobanGameState gs, ref List<IAction> allActions, Algo agent, float alpha = 0.1f,
-            float gamma = 0.9f, int episodeCount = 50, bool useOnPolicy = false)
+            float gamma = 0.9f, int episodeCount = 50, bool useOnPolicy = false, float eps = 0.5f, float theta = 0.005f)
         {
             this.algo = agent;
 
+            this.epsilonGreedy = eps;
+            this.theta = theta;
+            
             q_sa = new Dictionary<(SokobanGameState, IAction), float>(gameStateActionComparer);
             policy = new Dictionary<SokobanGameState, IAction>(gameStateComparer);
 
-            Simulate(ref gs, ref allActions, alpha, gamma, episodeCount);
+            Simulate(ref gs, ref allActions, alpha, gamma, episodeCount, useOnPolicy);
         }
 
         public void Simulate(ref SokobanGameState gs, ref List<IAction> allActions, float alpha = 0.1f,
@@ -324,9 +327,12 @@ namespace Sokoban
         private void Simulate_MonteCarlo_FV(ref Dictionary<SokobanGameState, IAction> pi, SokobanGameState gs_copy,
             int episodeCount = 50, bool useOnPolicy = false)
         {
+            Debug.LogWarning("Start MC ES FV Training");
+            
             List<SokobanGameState> exploredGameStates = new List<SokobanGameState>();
             for (int e = 0; e < episodeCount; e++)
             {
+                Debug.LogWarning($"Episode {e + 1} - MC ES");
                 List<SokobanGameState> serie = new List<SokobanGameState>();
                 List<SokobanGameState> processedEpisodes = new List<SokobanGameState>();
 
@@ -366,8 +372,6 @@ namespace Sokoban
 
                 if (useOnPolicy)
                 {
-                    int GSConnu = 0;
-
                     List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
                     foreach (var key in pi.Keys)
                     {
@@ -383,7 +387,6 @@ namespace Sokoban
                             int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(copy));
                             if (idxInExplo >= 0)
                             {
-                                GSConnu++;
                                 float Vs = exploredGameStates[idxInExplo].Returns / exploredGameStates[idxInExplo].N;
 
                                 if (Vs > best)
@@ -397,6 +400,8 @@ namespace Sokoban
                         newActions.Add((key, bestAction));
                     }
 
+                    Debug.Log($"Nombre d etat connu : {exploredGameStates.Count}");
+                    
                     foreach (var act in newActions)
                     {
                         pi[act.Item1] = act.Item2;
@@ -406,8 +411,6 @@ namespace Sokoban
 
             if (!useOnPolicy)
             {
-                int GSConnu = 0;
-
                 List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
                 foreach (var key in pi.Keys)
                 {
@@ -423,7 +426,6 @@ namespace Sokoban
                         int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(copy));
                         if (idxInExplo >= 0)
                         {
-                            GSConnu++;
                             float Vs = exploredGameStates[idxInExplo].Returns / exploredGameStates[idxInExplo].N;
 
                             if (Vs > best)
@@ -437,6 +439,8 @@ namespace Sokoban
                     newActions.Add((key, bestAction));
                 }
 
+                Debug.Log($"Nombre d etat connu : {exploredGameStates.Count}");
+                
                 foreach (var act in newActions)
                 {
                     pi[act.Item1] = act.Item2;
@@ -447,9 +451,12 @@ namespace Sokoban
         private void Simulate_MonteCarlo_EV(ref Dictionary<SokobanGameState, IAction> pi, SokobanGameState gs_copy,
             int episodeCount = 50, bool useOnPolicy = false)
         {
+            Debug.LogWarning("Start MC ES EV Training");
+            
             List<SokobanGameState> exploredGameStates = new List<SokobanGameState>();
             for (int e = 0; e < episodeCount; e++)
             {
+                Debug.LogWarning($"Episode {e + 1} - MC ES");
                 List<SokobanGameState> serie = new List<SokobanGameState>();
                 var copyGs = gs_copy.Clone();
 
@@ -522,8 +529,6 @@ namespace Sokoban
 
             if (!useOnPolicy)
             {
-                int GSConnu = 0;
-
                 List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
                 foreach (var key in pi.Keys)
                 {
@@ -539,7 +544,6 @@ namespace Sokoban
                         int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(copy));
                         if (idxInExplo >= 0)
                         {
-                            GSConnu++;
                             float Vs = exploredGameStates[idxInExplo].Returns / exploredGameStates[idxInExplo].N;
 
                             if (Vs > best)
@@ -552,7 +556,9 @@ namespace Sokoban
 
                     newActions.Add((key, bestAction));
                 }
-
+                
+                Debug.Log($"Nombre d etat connu : {exploredGameStates.Count}");
+                
                 foreach (var act in newActions)
                 {
                     pi[act.Item1] = act.Item2;
@@ -563,23 +569,24 @@ namespace Sokoban
         private float SimulateGameState(ref Dictionary<SokobanGameState, IAction> pi,
             ref List<SokobanGameState> exploredGS, ref SokobanGameState gs)
         {
+            Debug.LogWarning("Start MC ES Simulation");
             // On simule le GS
             // Ne pas oublier la selection pas Epsilon Greedy
-            bool gameEnd = false;
+            bool gameWin = false;
             bool gameOver = false;
             int iteration = 0;
-
-            var gsCopy = gs.Clone();
-            gsCopy.r = -1.0f;
             
-            while (!gameEnd && !gameOver && iteration < 10000)
+            while (!gameWin && !gameOver && iteration < 10000)
             {
                 iteration++;
 
                 var acts = gs.GetAvailableActions();
                 var selectedAct = acts[Random.Range(0, acts.Count)];
                 
-                if (policy.ContainsKey(gs))
+                var gsCopy = gs.Clone();
+                gsCopy.r = -1.0f;
+                
+                if (policy.ContainsKey(gsCopy))
                 {
                     if (Random.Range(0.0f, 1.0f) > epsilonGreedy)
                         selectedAct = pi[gsCopy];
@@ -591,22 +598,22 @@ namespace Sokoban
 
                 exploredGS.Add(gsCopy);
                 
-                bool objectifComplete = selectedAct.Perform(ref gsCopy);
+                bool objectifComplete = selectedAct.Perform(ref gs);
                 if (objectifComplete)
-                    gsCopy.r = 10.0f;
+                    gs.r = 10.0f;
                 else
-                    gsCopy.r = -1.0f;
+                    gs.r = -1.0f;
 
                 gameOver = false; //a changer
                 if (gameOver)
-                    gsCopy.r = -1000.0f;
+                    gs.r = -1000.0f;
                 
-                gameEnd = gsCopy.CheckFinish();
-                if (gameEnd)
-                    gsCopy.r = 1000.0f;
+                gameWin = gs.CheckFinish();
+                if (gameWin)
+                    gs.r = 1000.0f;
             }
 
-            return gameEnd ? 1.0f : 0.0f;
+            return gameWin ? 1.0f : 0.0f;
         }
 
         #endregion
@@ -615,14 +622,18 @@ namespace Sokoban
 
         private void PolicyImprovement()
         {
+            // Regarder si il est possible d'accéder à des etat en fonction de notre etat
+            // Etre Myope
         }
 
         private void PolicyEvaluation()
         {
+            
         }
 
         private void ValueIteration()
         {
+            
         }
 
         #endregion

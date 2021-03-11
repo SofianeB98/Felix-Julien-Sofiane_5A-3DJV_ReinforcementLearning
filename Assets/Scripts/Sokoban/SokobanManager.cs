@@ -28,13 +28,8 @@ namespace Sokoban
             
             var grid = LoadLevel();
             this.gameState = new SokobanGameState(grid.Item1, grid.Item2, actions);
-            this.gameState.GetAvailableActions().ForEach(x =>
-            {
-                Debug.Log(x.DebugAction());
-            });
             
-            
-            agent.Init(ref gameState, ref actions, SokobanAgent.Algo.Sarsa, episodeCount: 50);
+            agent.Init(ref gameState, ref actions, SokobanAgent.Algo.MC_ES_EveryVisit, episodeCount: 50, eps: 0.7f);
 
             StartCoroutine(PlayWithIA());
         }
