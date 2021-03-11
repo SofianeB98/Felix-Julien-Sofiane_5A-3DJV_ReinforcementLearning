@@ -145,7 +145,11 @@ namespace Sokoban
         public List<IAction> allActions;
 
         public float r = 0.0f;
+        public float v = 0.0f;
 
+        public float N = 0.0f;
+        public float Returns = 0.0f;
+        
         public (int, int) GridSize
         {
             get { return (Grid.GetLength(0), Grid.GetLength(1)); }
