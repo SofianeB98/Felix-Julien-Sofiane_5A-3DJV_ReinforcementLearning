@@ -34,6 +34,11 @@ public class GridParameter
     public Vector2Int targetState;
 }
 
+public enum GridWorld_Algo
+{
+    VALUE_ITERATION,
+    POLICY_ITERATION
+}
 
 public class GridWorld : MonoBehaviour
 {
@@ -47,7 +52,17 @@ public class GridWorld : MonoBehaviour
     [Header("World Parameter")]
     public float stepTime = 0.1f;
 
+    [Header("Debug Grid")]
+    public Texture upArrow;
+    public Texture downArrow;
+    public Texture rightArrow;
+    public Texture leftArrow;
+
     [Space(10)] public Camera cam;
+    public GridWorld_Algo algo;
+    [Header("Agent Settings")]
+    public float theta = 0.005f;
+    public float gamma = 0.9f;
 
     private void Start()
     {
@@ -62,6 +77,7 @@ public class GridWorld : MonoBehaviour
 
     private void Initialisation()
     {
+        this.agentGridWorld = new AgentGridWorld();
         // Initialisation des actions possible
         var rightAction = new MoveAction(new Vector2Int(1, 0), "DR");
         var leftAction = new MoveAction(new Vector2Int(-1, 0), "DL");
@@ -111,8 +127,8 @@ public class GridWorld : MonoBehaviour
         grid[gridParameter.startState.x, gridParameter.startState.y].state = GridCell.GridState.Start;
 
         // Definition du end state
-        gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
-
+        //gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
+        gridParameter.targetState = grid[0, 0].position;
         if (gridParameter.targetState.Equals(gridParameter.startState))
             while (gridParameter.targetState.Equals(gridParameter.startState))
                 gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
@@ -136,7 +152,7 @@ public class GridWorld : MonoBehaviour
             do
             {
                 idx = new Vector2Int(Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y));
-            } while (grid[idx.x, idx.y].state.Equals(GridCell.GridState.End) 
+            } while (grid[idx.x, idx.y].state.Equals(GridCell.GridState.End)
                      || grid[idx.x, idx.y].state.Equals(GridCell.GridState.Start)
                      || ThereIsAnOtherObstacleSoClose(idx));
 
@@ -148,23 +164,23 @@ public class GridWorld : MonoBehaviour
             //actionsDic.Remove(grid[idx.x, idx.y].position);
             actionsDic[grid[idx.x, idx.y].position] = new List<Action>();
         }
-        
+
         // Definition des actions possible pour chaque etat
         for (int i = 0; i < gridParameter.gridSize.x; i++)
         {
             for (int j = 0; j < gridParameter.gridSize.y; j++)
             {
-                if(grid[i,j].state.Equals(GridCell.GridState.End) || 
-                   grid[i,j].state.Equals(GridCell.GridState.Bloc))
+                if (grid[i, j].state.Equals(GridCell.GridState.End) ||
+                   grid[i, j].state.Equals(GridCell.GridState.Bloc))
                     continue;
-                
+
                 // Initialisation des actions possible pour le state [i, j]
                 foreach (var act in actions)
                 {
                     MoveAction a = act as MoveAction;
                     if (a.OutOfGridBound(grid[i, j].position + a.direction, ref gridParameter))
                         continue;
-                    
+
                     var nxt = grid[i, j].position + a.direction;
                     if (grid[nxt.x, nxt.y].state.Equals(GridCell.GridState.Bloc))
                         continue;
@@ -173,7 +189,7 @@ public class GridWorld : MonoBehaviour
                 }
             }
         }
-        
+
         // Creation des Bonus
 
 
@@ -183,28 +199,38 @@ public class GridWorld : MonoBehaviour
         cam.orthographicSize = ((gridParameter.gridSize.x + gridParameter.gridSize.y) * 0.5f + 5f) * 0.5f;
 
         // Initialisation de l'agent
-        this.agentGridWorld.Init(actionsDic, gridParameter.startState, gridParameter.targetState);
+        this.agentGridWorld.Init(actionsDic, gridParameter.startState, gridParameter.targetState, theta:this.theta, gamma:gamma);
+        this.agentGridWorld.upArrow = this.upArrow;
+        this.agentGridWorld.rightArrow = this.rightArrow;
+        this.agentGridWorld.downArrow= this.downArrow;
+        this.agentGridWorld.leftArrow = this.leftArrow;
 
         // Cration du visuel de l'agent
         this.agentGridWorld.visual = Instantiate(agentPrefab, new Vector3(this.agentGridWorld.actualState.x, this.agentGridWorld.actualState.y, 0.0f), Quaternion.identity);
+        if (algo == GridWorld_Algo.POLICY_ITERATION)
+        {
+            StartCoroutine(UpdateWorld());
+        }
+        else
+        {
+            this.agentGridWorld.ValueIteration(ref grid);
+        }
 
-        //this.agentGridWorld.ValueIteration(ref grid);
-        StartCoroutine(UpdateWorld());
     }
 
     private bool ThereIsAnOtherObstacleSoClose(Vector2Int idx)
     {
-        for (int i = idx.x - 1 ; i <= idx.x + 1; i++)
+        for (int i = idx.x - 1; i <= idx.x + 1; i++)
         {
             for (int j = idx.y - 1; j <= idx.y + 1; j++)
             {
-                var newPos = new Vector2Int(i,j);
+                var newPos = new Vector2Int(i, j);
 
                 if (newPos.Equals(idx))
                     continue;
 
-                if (newPos.x < 0 || newPos.x > gridParameter.gridSize.x - 1 
-                                 || newPos.y < 0 
+                if (newPos.x < 0 || newPos.x > gridParameter.gridSize.x - 1
+                                 || newPos.y < 0
                                  || newPos.y > gridParameter.gridSize.y - 1)
                     continue;
 

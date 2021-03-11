@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
+//[System.Serializable]
 public class AgentGridWorld
 {
-    [Header("Debug Grid")] 
+    [Header("Debug Grid")]
     public Texture upArrow;
     public Texture downArrow;
     public Texture rightArrow;
     public Texture leftArrow;
-    
+
     public Dictionary<Vector2Int, List<Action>> actions;
     public Dictionary<Vector2Int, Action> policy;
 
@@ -23,7 +23,7 @@ public class AgentGridWorld
 
     public float reward = 0.0f;
 
-    public void Init(Dictionary<Vector2Int, List<Action>> availableActions, Vector2Int startState, Vector2Int targetState, float gamma = 0.9f)
+    public void Init(Dictionary<Vector2Int, List<Action>> availableActions, Vector2Int startState, Vector2Int targetState, float gamma = 0.9f, float theta = 0.005f)
     {
         reward = 0.0f;
         this.gamma = gamma;
@@ -31,7 +31,7 @@ public class AgentGridWorld
         this.actualState = startState;
         this.targetState = targetState;
 
-        this.theta = 0.005f;
+        this.theta = theta;
 
         InitializeRandomPolicy();
     }
@@ -42,7 +42,7 @@ public class AgentGridWorld
         policy = new Dictionary<Vector2Int, Action>();
         foreach (var key in actions.Keys)
         {
-            if(actions[key].Count > 0)
+            if (actions[key].Count > 0)
                 policy.Add(key, actions[key][Random.Range(0, actions[key].Count)]);
             else
                 policy.Add(key, null);
@@ -118,7 +118,10 @@ public class AgentGridWorld
 
         if (!policyStable)
             PolicyEvaluation(ref allStates);
-
+        else
+        {
+            Debug.LogError("Policy Stable");
+        }
     }
 
 
@@ -131,7 +134,7 @@ public class AgentGridWorld
             delta = 0.0f;
             iteration++;
             Debug.Log(iteration);
-            
+
             for (int i = 0; i < allStates.GetLength(0); i++)
             {
                 for (int j = 0; j < allStates.GetLength(1); j++)
@@ -162,23 +165,39 @@ public class AgentGridWorld
         //TODO : Update la policy a la fin !
 
         string val = "";
-        for (int j = allStates.GetLength(1) - 1; j >=0; j--)
+        for (int j = allStates.GetLength(1) - 1; j >= 0; j--)
         {
             for (int i = 0; i < allStates.GetLength(0); i++)
             {
-                val += "[ "  + allStates[i,j].v  + " ] ";
+                val += "[ " + allStates[i, j].v + " ] ";
             }
 
             val += "\n";
         }
-        
+
         Debug.Log(val);
-        
+
         DisplayDirection(ref allStates);
     }
 
     private void DisplayDirection(ref GridCell[,] allStates)
     {
+        var minV = float.MaxValue;
+        var maxV = float.MinValue;
+
+
+        //for (int i = 0; i < allStates.GetLength(0); i++)
+        //{
+        //    for (int j = 0; j < allStates.GetLength(1); j++)
+        //    {
+        //        float v = allStates[i, j].v;
+        //        if (v < minV)
+        //            minV = v;
+        //        if (v > maxV)
+        //            maxV = v;
+        //    }
+        //}
+
         for (int i = 0; i < allStates.GetLength(0); i++)
         {
             for (int j = 0; j < allStates.GetLength(1); j++)
@@ -206,6 +225,7 @@ public class AgentGridWorld
                 {
                     rd.material.mainTexture = rightArrow; //.color = Color.cyan;
                 }
+                rd.material.color = Color.Lerp(Color.red, Color.green, allStates[i, j].v / 1000);
             }
         }
     }
