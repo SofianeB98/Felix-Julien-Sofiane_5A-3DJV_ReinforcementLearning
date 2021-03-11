@@ -508,7 +508,7 @@ public class AgentTicTacToe
             }
         }
 
-        return playerWinner == 1 ? 1.0f : 0.0f;
+        return playerWinner == 1 ? 1.0f : playerWinner == 0 ? -10.0f : 0.0f;
     }
 
     public Vector2Int GetBestAction(ref TicTacToe.GameState gs)

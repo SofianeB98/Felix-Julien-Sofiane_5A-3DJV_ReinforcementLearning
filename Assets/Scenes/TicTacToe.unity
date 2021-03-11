@@ -326,7 +326,7 @@ MonoBehaviour:
     isFirstVisit: 0
     isOnPolicy: 0
     epsilonGreedy: 0.3
-  episodeCount: 200
-  epsilonGreedy: 0.5
+  episodeCount: 300
+  epsilonGreedy: 0.7
   useFirstVisit: 0
   useOnPolicy: 1

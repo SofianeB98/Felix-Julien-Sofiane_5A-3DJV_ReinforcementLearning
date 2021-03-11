@@ -6,18 +6,33 @@ namespace Sokoban
 {
     public class SokobanManager : MonoBehaviour
     {
-        public Sokoban.SokobanGameState gameState;
-        IAction moveUp = new MoveAction(Vector2Int.up);
-        IAction moveDown = new MoveAction(Vector2Int.down);
-        IAction moveLeft = new MoveAction(Vector2Int.left);
-        IAction moveRight = new MoveAction(Vector2Int.right);
-        public GameObject Player;
-        public List<IAction> actions;
+        private Sokoban.SokobanGameState gameState;
+        private IAction moveUp = new MoveAction(Vector2Int.up);
+        private IAction moveDown = new MoveAction(Vector2Int.down);
+        private IAction moveLeft = new MoveAction(Vector2Int.left);
+        private IAction moveRight = new MoveAction(Vector2Int.right);
+        private GameObject Player;
+        private List<IAction> actions;
 
-        public bool playerCanControl = false;
-        
+        [Header("Player Control")] public bool playerCanControl = false;
+
+        [Header("Learning Parameter")] [SerializeField]
+        private SokobanAgent.Algo selectedAlgo = SokobanAgent.Algo.QLearning;
+
+        [SerializeField] private int episodeCount = 100;
+        [SerializeField, Range(0.0f, 1.0f)] private float epsilonGreedy = 0.5f;
+        [SerializeField, Range(0.0f, 1.0f)] private float gamma = 0.9f;
+
+        [Header("SARSA - QLearning")] [SerializeField]
+        private float alpha = 0.2f;
+
+        [Header("Value-Policy Iteration")] [SerializeField, Range(0.0f, 1.0f)]
+        private float theta = 0.005f;
+
+        [Header("MC ES")] [SerializeField] private bool useOnPolicy = false;
+
         private SokobanAgent agent = new SokobanAgent();
-        
+
         void Start()
         {
             this.actions = new List<IAction>();
@@ -25,11 +40,12 @@ namespace Sokoban
             actions.Add(moveDown);
             actions.Add(moveLeft);
             actions.Add(moveRight);
-            
+
             var grid = LoadLevel();
             this.gameState = new SokobanGameState(grid.Item1, grid.Item2, actions);
-            
-            agent.Init(ref gameState, ref actions, SokobanAgent.Algo.MC_ES_EveryVisit, episodeCount: 50, eps: 0.7f);
+
+            agent.Init(ref gameState, ref actions, selectedAlgo, alpha, gamma, episodeCount, useOnPolicy, epsilonGreedy,
+                theta);
 
             StartCoroutine(PlayWithIA());
         }
@@ -40,18 +56,22 @@ namespace Sokoban
             Debug.Log("Start Playing IA");
             while (!gameState.CheckFinish() && iteration < 100000)
             {
-                iteration++;
-                var act = agent.GetBestAction(ref gameState);
-                
-                act.Perform(ref this.gameState);
-                UpdatePlayerPosition();
-                UpdateBlocPosition();
-                
+                if (!playerCanControl)
+                {
+                    iteration++;
+                    var act = agent.GetBestAction(ref gameState);
+
+                    act.Perform(ref this.gameState);
+                    UpdatePlayerPosition();
+                    UpdateBlocPosition();
+                }
+
                 yield return new WaitForSeconds(0.5f);
             }
+
             yield break;
         }
-        
+
         public (Tile[,], List<Caisse>) LoadLevel()
         {
             var walls = GameObject.FindGameObjectsWithTag("Wall");
@@ -99,7 +119,7 @@ namespace Sokoban
                 var pos = new Vector2Int(
                     Mathf.RoundToInt(item.transform.position.x),
                     Mathf.RoundToInt(item.transform.position.y)
-                    );
+                );
                 var t = new Tile(pos, State.Unwalkable, item);
                 grid[pos.x, pos.y] = t;
             }
@@ -110,7 +130,7 @@ namespace Sokoban
                 var pos = new Vector2Int(
                     Mathf.RoundToInt(item.transform.position.x),
                     Mathf.RoundToInt(item.transform.position.y)
-                    );
+                );
                 var t = new Tile(pos, State.Walkable, item);
                 grid[pos.x, pos.y] = t;
             }
@@ -121,7 +141,7 @@ namespace Sokoban
                 var pos = new Vector2Int(
                     Mathf.RoundToInt(item.transform.position.x),
                     Mathf.RoundToInt(item.transform.position.y)
-                    );
+                );
                 grid[pos.x, pos.y].state = State.Caisse;
                 b.Add(new Caisse(pos, item));
             }
@@ -132,7 +152,7 @@ namespace Sokoban
                 var pos = new Vector2Int(
                     Mathf.RoundToInt(playerPos.x),
                     Mathf.RoundToInt(playerPos.y)
-                    );
+                );
                 grid[pos.x, pos.y].state = State.Player;
                 this.Player = player;
             }
@@ -142,7 +162,7 @@ namespace Sokoban
                 var pos = new Vector2Int(
                     Mathf.RoundToInt(item.transform.position.x),
                     Mathf.RoundToInt(item.transform.position.y)
-                    );
+                );
                 grid[pos.x, pos.y].state = State.Objective;
             }
 
@@ -151,12 +171,12 @@ namespace Sokoban
                 var pos = new Vector2Int(
                     Mathf.RoundToInt(item.transform.position.x),
                     Mathf.RoundToInt(item.transform.position.y)
-                    );
+                );
                 var t = new Tile(pos, State.Unwalkable, item);
                 grid[pos.x, pos.y] = t;
             }
-            return (grid, b);
 
+            return (grid, b);
         }
 
         public void Update()
@@ -195,8 +215,8 @@ namespace Sokoban
 
         void UpdatePlayerPosition()
         {
-
-            this.Player.transform.position = new Vector3(this.gameState.playerPosition.x, this.gameState.playerPosition.y, 0);
+            this.Player.transform.position =
+                new Vector3(this.gameState.playerPosition.x, this.gameState.playerPosition.y, 0);
         }
 
         void UpdateBlocPosition()
