@@ -94,7 +94,7 @@ namespace Sokoban
                     break;
 
                 case Algo.ValueIteration:
-                    ValueIteration();
+                    ValueIteration(ref policy, ref gs, gamma);
                     break;
 
                 case Algo.PolicyIteration:
@@ -174,10 +174,13 @@ namespace Sokoban
                     sPrime.r = gameFinish ? 1000.0f : objectifComplete ? 10.0f : -1.0f;
 
                     // Update de Q
-                    q_sa[(s, a)] += alpha * sPrime.r + gamma * q_sa[(sPrime, aPrime)] - q_sa[(s, a)];
+                    q_sa[(s, a)] += alpha * (sPrime.r + gamma * q_sa[(sPrime, aPrime)] - q_sa[(s, a)]);
 
                     if (gameFinish)
+                    {
+                        q_sa[(sPrime, aPrime)] = 0.0f;
                         break;
+                    }
 
                     // Application de s et a pour la prochaine itération
                     s = sPrime;
@@ -293,10 +296,13 @@ namespace Sokoban
                     sPrime.r = gameFinish ? 1000.0f : objectifComplete ? 10.0f : -1.0f;
 
                     // Update de Q
-                    q_sa[(s, a)] += alpha * sPrime.r + gamma * bestAPrime - q_sa[(s, a)];
+                    q_sa[(s, a)] += alpha * (sPrime.r + gamma * bestAPrime - q_sa[(s, a)]);
 
                     if (gameFinish)
+                    {
+                        
                         break;
+                    }
 
                     // Application de s et a pour la prochaine itération
                     s = sPrime;
@@ -664,9 +670,59 @@ namespace Sokoban
             
         }
 
-        private void ValueIteration()
+        private void ValueIteration(ref Dictionary<SokobanGameState, IAction> pi, ref SokobanGameState gs, float gamma = 0.9f)
         {
+            List<SokobanGameState> allStates = new List<SokobanGameState>();
+            float delta = theta + 1.0f;
+            int iteration = 0;
             
+            allStates.Add(gs.Clone());
+            
+            while (delta > theta && iteration < maxIteration)
+            {
+                iteration++;
+                delta = 0.0f;
+                
+                for (int i = 0; i < allStates.Count; i++)
+                {
+                    float tmp = allStates[i].v;
+                    float maxV = float.MinValue;
+
+                    var actions = allStates[i].GetAvailableActions();
+                    foreach (var act in actions)
+                    {
+                        if(!pi.ContainsKey(allStates[i]))
+                            pi.Add(allStates[i], act);
+
+                        var copy = allStates[i].Clone();
+                        var obj = act.Perform(ref copy);
+
+                        var idx = -1;
+                        if(!allStates.Contains(copy))
+                            allStates.Add(copy);
+
+                        idx = allStates.FindIndex(x => x.Equals(copy));
+
+                        allStates[idx].r = copy.CheckFinish() ? 1000.0f : obj ? 10.0f : -1.0f;
+
+                        if (allStates[idx].CheckFinish())
+                        {
+                            allStates[idx].r = 0.0f;
+                            allStates[idx].v = 1000.0f;
+                        }
+                        
+                        float v = allStates[idx].r + gamma * allStates[idx].v;
+                        if (v > maxV)
+                        {
+                            maxV = v;
+                            pi[allStates[i]] = act;
+                        }
+                    }
+
+                    allStates[i].v = maxV < -1000000.0f ? allStates[i].v : maxV;
+                    delta = Mathf.Max(delta, Mathf.Abs(tmp - allStates[i].v));
+                }
+            }
         }
 
         #endregion
