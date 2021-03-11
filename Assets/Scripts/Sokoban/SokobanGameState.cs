@@ -187,8 +187,8 @@ namespace Sokoban
                     return false;
             }
 
-            if (!playerPosition.Equals(gs.playerPosition))
-                return false;
+            //if (!playerPosition.Equals(gs.playerPosition))
+            //    return false;
             
             return true;
         }
