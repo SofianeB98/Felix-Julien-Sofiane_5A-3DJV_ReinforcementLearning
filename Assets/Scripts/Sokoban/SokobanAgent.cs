@@ -267,7 +267,7 @@ namespace Sokoban
                     //var aPrime = availableActionsPrime.Count > 0
                     //   ? availableActionsPrime[Random.Range(0, availableActionsPrime.Count)]
                     //    : null;
-                    IAction aPrime = availableActionsPrime.Count > 0 ? availableActionsPrime[0] : null;
+                    IAction aPrime = null;
                     float bestAPrime = 0.0f;
                     foreach (var actPrime in availableActionsPrime)
                     {
@@ -279,16 +279,15 @@ namespace Sokoban
                         if (!q_sa.ContainsKey((sPrime, actPrime)))
                             q_sa.Add((sPrime, actPrime), 0.0f);
 
-                        if (aPrime == null)
-                            aPrime = actPrime;
-                        
                         if (q_sa[(sPrime, actPrime)] > bestAPrime)
                         {
                             bestAPrime = q_sa[(sPrime, actPrime)];
                             aPrime = actPrime;
                         }
                     }
-
+                    
+                    if (aPrime == null)
+                        aPrime = availableActionsPrime.Count > 0 ? availableActionsPrime[Random.Range(0, availableActionsPrime.Count)] : null;
 
                     sPrime.r = gameFinish ? 1000.0f : objectifComplete ? 10.0f : -1.0f;
 
