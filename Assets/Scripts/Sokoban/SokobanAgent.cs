@@ -81,11 +81,12 @@ namespace Sokoban
                     break;
 
                 case Algo.MC_ES_EveryVisit:
-                    Simulate_MonteCarlo_EV(ref policy, gs.Clone(), episodeCount, useOnPolicy);
+                    //Simulate_MonteCarlo_EV(ref policy, gs.Clone(), episodeCount, useOnPolicy);
+                    Simulate_MonteCarlo(ref policy, gs.Clone(), episodeCount, useOnPolicy, false);
                     break;
 
                 case Algo.MC_ES_FirstVisit:
-                    Simulate_MonteCarlo_FV(ref policy, gs.Clone(), episodeCount, useOnPolicy);
+                    Simulate_MonteCarlo(ref policy, gs.Clone(), episodeCount, useOnPolicy, true);
                     break;
 
                 case Algo.QLearning:
@@ -338,8 +339,8 @@ namespace Sokoban
 
         #region MonteCarloES
 
-        private void Simulate_MonteCarlo_FV(ref Dictionary<SokobanGameState, IAction> pi, SokobanGameState gs_copy,
-            int episodeCount = 50, bool useOnPolicy = false)
+        private void Simulate_MonteCarlo(ref Dictionary<SokobanGameState, IAction> pi, SokobanGameState gs_copy,
+            int episodeCount = 50, bool useOnPolicy = false, bool useFirstVisit = false)
         {
             List<SokobanGameState> exploredGameStates = new List<SokobanGameState>();
             for (int e = 0; e < episodeCount; e++)
@@ -358,7 +359,7 @@ namespace Sokoban
                     G += serie[t + 1].r; //a remplacer par le reward de T + 1
                     var GSt = serie[t];
 
-                    if (processedEpisodes.FindIndex(x => x.Equals(GSt)) == -1)
+                    if (useFirstVisit && processedEpisodes.FindIndex(x => x.Equals(GSt)) == -1)
                     {
                         int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(GSt));
                         if (idxInExplo >= 0)
@@ -379,6 +380,26 @@ namespace Sokoban
                         }
 
                         processedEpisodes.Add(GSt);
+                    }
+                    else
+                    {
+                        int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(GSt));
+                        if (idxInExplo >= 0)
+                        {
+                            GSt = exploredGameStates[idxInExplo];
+                            GSt.Returns += G;
+                            GSt.N += 1;
+
+                            exploredGameStates[idxInExplo] = GSt;
+                        }
+                        else
+                        {
+                            GSt.Returns += G;
+                            GSt.N += 1;
+                            serie[t] = GSt;
+
+                            exploredGameStates.Add(GSt);
+                        }
                     }
                 }
 
@@ -460,121 +481,121 @@ namespace Sokoban
             }
         }
 
-        private void Simulate_MonteCarlo_EV(ref Dictionary<SokobanGameState, IAction> pi, SokobanGameState gs_copy,
-            int episodeCount = 50, bool useOnPolicy = false)
-        {
-            List<SokobanGameState> exploredGameStates = new List<SokobanGameState>();
-            for (int e = 0; e < episodeCount; e++)
-            {
-                Debug.LogWarning($"Episode {e + 1} - MC ES");
-                List<SokobanGameState> serie = new List<SokobanGameState>();
-                var copyGs = gs_copy.Clone();
-
-                float R = SimulateGameState(ref pi, ref serie, ref copyGs);
-                float G = 0;
-
-                for (int t = serie.Count - 2; t >= 0; t--)
-                {
-                    G += serie[t + 1].r; //a remplacer par le reward de T + 1
-                    var GSt = serie[t];
-
-                    int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(GSt));
-                    if (idxInExplo >= 0)
-                    {
-                        GSt = exploredGameStates[idxInExplo];
-                        GSt.Returns += G;
-                        GSt.N += 1;
-
-                        exploredGameStates[idxInExplo] = GSt;
-                    }
-                    else
-                    {
-                        GSt.Returns += G;
-                        GSt.N += 1;
-                        serie[t] = GSt;
-
-                        exploredGameStates.Add(GSt);
-                    }
-                }
-
-                if (useOnPolicy)
-                {
-                    int GSConnu = 0;
-
-                    List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
-                    foreach (var key in pi.Keys)
-                    {
-                        float best = float.MinValue;
-                        IAction bestAction = pi[key];
-
-                        var availableActions = key.GetAvailableActions();
-                        foreach (var act in availableActions)
-                        {
-                            var copy = key.Clone();
-                            act.Perform(ref copy);
-
-                            int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(copy));
-                            if (idxInExplo >= 0)
-                            {
-                                GSConnu++;
-                                float Vs = exploredGameStates[idxInExplo].Returns / exploredGameStates[idxInExplo].N;
-
-                                if (Vs > best)
-                                {
-                                    best = Vs;
-                                    bestAction = act;
-                                }
-                            }
-                        }
-
-                        newActions.Add((key, bestAction));
-                    }
-
-                    foreach (var act in newActions)
-                    {
-                        pi[act.Item1] = act.Item2;
-                    }
-                }
-            }
-
-            if (!useOnPolicy)
-            {
-                List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
-                foreach (var key in pi.Keys)
-                {
-                    float best = float.MinValue;
-                    IAction bestAction = pi[key];
-
-                    var availableActions = key.GetAvailableActions();
-                    foreach (var act in availableActions)
-                    {
-                        var copy = key.Clone();
-                        act.Perform(ref copy);
-
-                        int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(copy));
-                        if (idxInExplo >= 0)
-                        {
-                            float Vs = exploredGameStates[idxInExplo].Returns / exploredGameStates[idxInExplo].N;
-
-                            if (Vs > best)
-                            {
-                                best = Vs;
-                                bestAction = act;
-                            }
-                        }
-                    }
-
-                    newActions.Add((key, bestAction));
-                }
-
-                Debug.Log($"Nombre d etat connu : {exploredGameStates.Count}");
-
-                foreach (var act in newActions)
-                {
-                    pi[act.Item1] = act.Item2;
-                }
-            }
-        }
+        // private void Simulate_MonteCarlo_EV(ref Dictionary<SokobanGameState, IAction> pi, SokobanGameState gs_copy,
+        //     int episodeCount = 50, bool useOnPolicy = false)
+        // {
+        //     List<SokobanGameState> exploredGameStates = new List<SokobanGameState>();
+        //     for (int e = 0; e < episodeCount; e++)
+        //     {
+        //         Debug.LogWarning($"Episode {e + 1} - MC ES");
+        //         List<SokobanGameState> serie = new List<SokobanGameState>();
+        //         var copyGs = gs_copy.Clone();
+        //
+        //         float R = SimulateGameState(ref pi, ref serie, ref copyGs);
+        //         float G = 0;
+        //
+        //         for (int t = serie.Count - 2; t >= 0; t--)
+        //         {
+        //             G += serie[t + 1].r; //a remplacer par le reward de T + 1
+        //             var GSt = serie[t];
+        //
+        //             int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(GSt));
+        //             if (idxInExplo >= 0)
+        //             {
+        //                 GSt = exploredGameStates[idxInExplo];
+        //                 GSt.Returns += G;
+        //                 GSt.N += 1;
+        //
+        //                 exploredGameStates[idxInExplo] = GSt;
+        //             }
+        //             else
+        //             {
+        //                 GSt.Returns += G;
+        //                 GSt.N += 1;
+        //                 serie[t] = GSt;
+        //
+        //                 exploredGameStates.Add(GSt);
+        //             }
+        //         }
+        //
+        //         if (useOnPolicy)
+        //         {
+        //             int GSConnu = 0;
+        //
+        //             List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
+        //             foreach (var key in pi.Keys)
+        //             {
+        //                 float best = float.MinValue;
+        //                 IAction bestAction = pi[key];
+        //
+        //                 var availableActions = key.GetAvailableActions();
+        //                 foreach (var act in availableActions)
+        //                 {
+        //                     var copy = key.Clone();
+        //                     act.Perform(ref copy);
+        //
+        //                     int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(copy));
+        //                     if (idxInExplo >= 0)
+        //                     {
+        //                         GSConnu++;
+        //                         float Vs = exploredGameStates[idxInExplo].Returns / exploredGameStates[idxInExplo].N;
+        //
+        //                         if (Vs > best)
+        //                         {
+        //                             best = Vs;
+        //                             bestAction = act;
+        //                         }
+        //                     }
+        //                 }
+        //
+        //                 newActions.Add((key, bestAction));
+        //             }
+        //
+        //             foreach (var act in newActions)
+        //             {
+        //                 pi[act.Item1] = act.Item2;
+        //             }
+        //         }
+        //     }
+        //
+        //     if (!useOnPolicy)
+        //     {
+        //         List<(SokobanGameState, IAction)> newActions = new List<(SokobanGameState, IAction)>();
+        //         foreach (var key in pi.Keys)
+        //         {
+        //             float best = float.MinValue;
+        //             IAction bestAction = pi[key];
+        //
+        //             var availableActions = key.GetAvailableActions();
+        //             foreach (var act in availableActions)
+        //             {
+        //                 var copy = key.Clone();
+        //                 act.Perform(ref copy);
+        //
+        //                 int idxInExplo = exploredGameStates.FindIndex(x => x.Equals(copy));
+        //                 if (idxInExplo >= 0)
+        //                 {
+        //                     float Vs = exploredGameStates[idxInExplo].Returns / exploredGameStates[idxInExplo].N;
+        //
+        //                     if (Vs > best)
+        //                     {
+        //                         best = Vs;
+        //                         bestAction = act;
+        //                     }
+        //                 }
+        //             }
+        //
+        //             newActions.Add((key, bestAction));
+        //         }
+        //
+        //         Debug.Log($"Nombre d etat connu : {exploredGameStates.Count}");
+        //
+        //         foreach (var act in newActions)
+        //         {
+        //             pi[act.Item1] = act.Item2;
+        //         }
+        //     }
+        // }
 
         private float SimulateGameState(ref Dictionary<SokobanGameState, IAction> pi,
             ref List<SokobanGameState> exploredGS, ref SokobanGameState gs)
@@ -633,17 +654,19 @@ namespace Sokoban
         private void PolicyImprovement()
         {
             // Regarder si il est possible d'accéder à des etat en fonction de notre etat
-            // Etre Myope
+            // Etre Myope?
 
             // Pos du joueur peut etre pas utile
         }
 
         private void PolicyEvaluation()
         {
+            
         }
 
         private void ValueIteration()
         {
+            
         }
 
         #endregion
