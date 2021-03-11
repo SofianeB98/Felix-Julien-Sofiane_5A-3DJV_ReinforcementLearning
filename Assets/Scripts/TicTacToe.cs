@@ -5,20 +5,21 @@ using UnityEngine;
 
 public class TicTacToe : MonoBehaviour
 {
+    [Header("Grid Size")]
     public const int GridSize = 3;
 
+    [Header("Visual")]
     public Texture Neutral;
     public Texture Cross;
     public Texture Circle;
     public GameObject tilePrefab;
 
-    public GameState gameState;
+    private GameState gameState;
 
     public delegate void OnVictory(int player);
-
     public event OnVictory victory;
 
-    public bool gameEnd = false;
+    private bool gameEnd = false;
 
     public enum State
     {
@@ -146,16 +147,19 @@ public class TicTacToe : MonoBehaviour
         }
     }
 
-    public int playerTurn = 0;
+    private int playerTurn = 0;
 
-    public AgentTicTacToe agent;
-    public GameObject[,] visualGrid;
+    private AgentTicTacToe agent;
+    private GameObject[,] visualGrid;
 
     [Header("Agent Parameter")] 
     [SerializeField] private int episodeCount = 1000;
     [SerializeField, Range(0.0f, 1.0f)] private float epsilonGreedy = 0.3f;
     [SerializeField] private bool useFirstVisit = false;
     [SerializeField] private bool useOnPolicy = false;
+    [SerializeField] private float winR = 10.0f;
+    [SerializeField] private float nulR = 0.0f;
+    [SerializeField] private float loseR = -10.0f;
     
     public bool SetCell(int playerTurn, int x, int y)
     {
@@ -200,7 +204,7 @@ public class TicTacToe : MonoBehaviour
         agent.policy = new Dictionary<GameState, Vector2Int>();
 
 
-        agent.Simulate(ref this.gameState, episodeCount, useFirstVisit, useOnPolicy, epsilonGreedy);
+        agent.Simulate(ref this.gameState, episodeCount, useFirstVisit, useOnPolicy, epsilonGreedy, winR, nulR, loseR);
 
         StartCoroutine(GameController());
     }

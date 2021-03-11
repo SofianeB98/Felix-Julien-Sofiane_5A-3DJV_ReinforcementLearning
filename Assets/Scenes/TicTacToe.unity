@@ -123,6 +123,60 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &15727979
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 15727981}
+  - component: {fileID: 15727980}
+  m_Layer: 0
+  m_Name: TicTacToeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &15727980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15727979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cab458d1345395f4a97518c766d1647f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Neutral: {fileID: 2800000, guid: be98b5a0767bee34c8fbb9b3ecaab31b, type: 3}
+  Cross: {fileID: 2800000, guid: 7850080d08550f9498660a35bb823baa, type: 3}
+  Circle: {fileID: 2800000, guid: 74074fd34e9b43e4bae4fe099efe3466, type: 3}
+  tilePrefab: {fileID: 1061754290737683173, guid: 47e70dff4db064c4bb75d1e6f5f83e05, type: 3}
+  episodeCount: 1000
+  epsilonGreedy: 0.3
+  useFirstVisit: 0
+  useOnPolicy: 0
+  winR: 1
+  nulR: 0
+  loseR: 0
+--- !u!4 &15727981
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15727979}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &205708282
 GameObject:
   m_ObjectHideFlags: 0
@@ -227,7 +281,6 @@ GameObject:
   - component: {fileID: 1796365749}
   - component: {fileID: 1796365748}
   - component: {fileID: 1796365747}
-  - component: {fileID: 1796365750}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -269,8 +322,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 2
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -294,39 +347,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1796365746}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 1, y: 1, z: -3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1796365750
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1796365746}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cab458d1345395f4a97518c766d1647f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Neutral: {fileID: 2800000, guid: be98b5a0767bee34c8fbb9b3ecaab31b, type: 3}
-  Cross: {fileID: 2800000, guid: 7850080d08550f9498660a35bb823baa, type: 3}
-  Circle: {fileID: 2800000, guid: 74074fd34e9b43e4bae4fe099efe3466, type: 3}
-  tilePrefab: {fileID: 1061754290737683173, guid: 47e70dff4db064c4bb75d1e6f5f83e05, type: 3}
-  gameState:
-    N: 0
-    Returns: 0
-  gameEnd: 0
-  playerTurn: 0
-  agent:
-    ticTacToe: {fileID: 0}
-    isFirstVisit: 0
-    isOnPolicy: 0
-    epsilonGreedy: 0.3
-  episodeCount: 300
-  epsilonGreedy: 0.7
-  useFirstVisit: 0
-  useOnPolicy: 1

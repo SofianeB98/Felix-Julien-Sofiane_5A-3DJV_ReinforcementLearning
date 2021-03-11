@@ -13,12 +13,20 @@ public class AgentTicTacToe
     public float epsilonGreedy = 0.3f;
 
     public Dictionary<TicTacToe.GameState, Vector2Int> policy;
+
+    private float winR = 10.0f;
+    private float nulR = 0.0f;
+    private float loseR = -10.0f;
     
     public void Simulate(ref TicTacToe.GameState gs, int episodeCount = 10, bool useFirstVisit = false,
-        bool useOnPolicy = false, float eps = 0.3f)
+        bool useOnPolicy = false, float eps = 0.3f, float win = 10.0f, float nul = 0.0f, float lose = -10.0f)
     {
         var V = 0.0f;
 
+        this.winR = win;
+        this.loseR = lose;
+        this.nulR = nul;
+        
         var copyGs = new TicTacToe.GameState(gs.Grid, gs.N, gs.Returns);
 
         this.isFirstVisit = useFirstVisit;
@@ -508,7 +516,7 @@ public class AgentTicTacToe
             }
         }
 
-        return playerWinner == 1 ? 1.0f : playerWinner == 0 ? -10.0f : 0.0f;
+        return playerWinner == 1 ? winR : playerWinner == 0 ? nulR : loseR;
     }
 
     public Vector2Int GetBestAction(ref TicTacToe.GameState gs)
