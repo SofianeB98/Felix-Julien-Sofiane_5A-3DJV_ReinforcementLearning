@@ -54,13 +54,15 @@ namespace Sokoban
         // Pour Qlearning, ignorer ligne 7, testr toutes les actions possible et garde le q(s', a') maximum pour le calcule
 
         public void Init(ref SokobanGameState gs, ref List<IAction> allActions, Algo agent, float alpha = 0.1f,
-            float gamma = 0.9f, int episodeCount = 50, bool useOnPolicy = false, float eps = 0.5f, float theta = 0.005f)
+            float gamma = 0.9f, int episodeCount = 50, bool useOnPolicy = false, float eps = 0.5f, float theta = 0.005f, int maxIte = 1000)
         {
             this.algo = agent;
 
             this.epsilonGreedy = eps;
             this.theta = theta;
 
+            this.maxIteration = maxIte;
+            
             q_sa = new Dictionary<(SokobanGameState, IAction), float>(gameStateActionComparer);
             policy = new Dictionary<SokobanGameState, IAction>(gameStateComparer);
 

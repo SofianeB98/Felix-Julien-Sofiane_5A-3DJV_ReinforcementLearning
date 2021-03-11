@@ -16,9 +16,10 @@ namespace Sokoban
 
         [Header("Player Control")] public bool playerCanControl = false;
 
-        [Header("Learning Parameter")] [SerializeField]
-        private SokobanAgent.Algo selectedAlgo = SokobanAgent.Algo.QLearning;
+        [Header("Learning Parameter")] 
+        [SerializeField] private SokobanAgent.Algo selectedAlgo = SokobanAgent.Algo.QLearning;
 
+        [SerializeField] private int maxIteration = 1000;
         [SerializeField] private int episodeCount = 100;
         [SerializeField, Range(0.0f, 1.0f)] private float epsilonGreedy = 0.5f;
         [SerializeField, Range(0.0f, 1.0f)] private float gamma = 0.9f;
@@ -45,7 +46,7 @@ namespace Sokoban
             this.gameState = new SokobanGameState(grid.Item1, grid.Item2, actions);
 
             agent.Init(ref gameState, ref actions, selectedAlgo, alpha, gamma, episodeCount, useOnPolicy, epsilonGreedy,
-                theta);
+                theta, maxIteration);
 
             StartCoroutine(PlayWithIA());
         }
