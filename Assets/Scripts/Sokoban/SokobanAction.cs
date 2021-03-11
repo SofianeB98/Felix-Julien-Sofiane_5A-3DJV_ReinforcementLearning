@@ -61,13 +61,18 @@ namespace Sokoban
                     }
                     break;
                 case State.Walkable:
-                    gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = State.Walkable;
+                    var currentState = gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state;
+                    gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = currentState == State.Objective ? State.Objective : State.Walkable;
                     gameState.playerPosition += direction;
                     gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = State.Player;
                     break;
                 case State.Unwalkable:
                     break;
-
+                case State.Objective:
+                    var state = gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state;
+                    gameState.Grid[gameState.playerPosition.x, gameState.playerPosition.y].state = state == State.Objective ? State.Objective : State.Walkable;
+                    gameState.playerPosition += direction;
+                    break;
 
             }
             return res;
