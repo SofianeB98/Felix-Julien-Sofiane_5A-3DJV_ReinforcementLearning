@@ -29,7 +29,7 @@ public class GridParameter
     public Vector2Int gridSize;
     public GameObject gridCellPrefab;
     public int unwalkableCellCount = 1;
-    public int bonusCount = 1;
+    [HideInInspector]public int bonusCount = 1;
     public Vector2Int startState;
     public Vector2Int targetState;
 }
@@ -42,7 +42,8 @@ public enum GridWorld_Algo
 
 public class GridWorld : MonoBehaviour
 {
-    [Header("Grid")] public GridParameter gridParameter;
+    [Header("Grid")] 
+    public GridParameter gridParameter;
     public GridCell[,] grid; // = tout les etats
     public Transform gridParent;
 
@@ -58,9 +59,12 @@ public class GridWorld : MonoBehaviour
     public Texture rightArrow;
     public Texture leftArrow;
 
-    [Space(10)] public Camera cam;
-    public GridWorld_Algo algo;
+    [Space(10)] 
+    
+    public Camera cam;
+    
     [Header("Agent Settings")]
+    public GridWorld_Algo algo;
     public float theta = 0.005f;
     public float gamma = 0.9f;
 
@@ -75,9 +79,11 @@ public class GridWorld : MonoBehaviour
         Initialisation();
     }
 
+    // Initialise la map + l'agent
     private void Initialisation()
     {
         this.agentGridWorld = new AgentGridWorld();
+        
         // Initialisation des actions possible
         var rightAction = new MoveAction(new Vector2Int(1, 0), "DR");
         var leftAction = new MoveAction(new Vector2Int(-1, 0), "DL");
@@ -100,7 +106,7 @@ public class GridWorld : MonoBehaviour
         {
             for (int j = 0; j < gridParameter.gridSize.y; j++)
             {
-                // Initialisation du state et de la position de la grid
+                // Initialisation du state par defaut et de la position de la grid
                 grid[i, j] = new GridCell()
                 {
                     position = new Vector2Int(i, j),
@@ -122,12 +128,12 @@ public class GridWorld : MonoBehaviour
             }
         }
 
-        // Definition du start state
+        // Definition du start state (pas utile pour le training de l'agent)
         gridParameter.startState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
         grid[gridParameter.startState.x, gridParameter.startState.y].state = GridCell.GridState.Start;
 
-        // Definition du end state
-        //gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
+        // Definition du end state (décommenter la ligne 132 et commenter la 133 pour que ce soit aleatoire)
+        // gridParameter.targetState = grid[Random.Range(0, gridParameter.gridSize.x), Random.Range(0, gridParameter.gridSize.y)].position;
         gridParameter.targetState = grid[0, 0].position;
         if (gridParameter.targetState.Equals(gridParameter.startState))
             while (gridParameter.targetState.Equals(gridParameter.startState))
@@ -141,7 +147,7 @@ public class GridWorld : MonoBehaviour
         grid[gridParameter.targetState.x, gridParameter.targetState.y].r = 0.0f;
         grid[gridParameter.targetState.x, gridParameter.targetState.y].v = 1000.0f;
 
-        // Reset des action possible au end state, on est � la fin donc on ne fait plus rien !
+        // Reset des action possible au end state, on est a la fin donc on ne fait plus rien !
         actionsDic[gridParameter.targetState] = new List<Action>();
 
         // Creation des obstacles
@@ -161,7 +167,7 @@ public class GridWorld : MonoBehaviour
             grid[idx.x, idx.y].v = 0.0f;
             grid[idx.x, idx.y].visual.GetComponent<Renderer>().material.color = Color.black;
 
-            //actionsDic.Remove(grid[idx.x, idx.y].position);
+            // On remove les actions possible sur les bloc
             actionsDic[grid[idx.x, idx.y].position] = new List<Action>();
         }
 
@@ -189,10 +195,7 @@ public class GridWorld : MonoBehaviour
                 }
             }
         }
-
-        // Creation des Bonus
-
-
+        
         // Setup de la camera afin d'avoir une vu global de la grid
         cam.transform.position = new Vector3(gridParameter.gridSize.x * 0.5f, gridParameter.gridSize.y * 0.5f, -5);
         cam.orthographic = true;
@@ -205,19 +208,19 @@ public class GridWorld : MonoBehaviour
         this.agentGridWorld.downArrow= this.downArrow;
         this.agentGridWorld.leftArrow = this.leftArrow;
 
-        // Cration du visuel de l'agent
-        this.agentGridWorld.visual = Instantiate(agentPrefab, new Vector3(this.agentGridWorld.actualState.x, this.agentGridWorld.actualState.y, 0.0f), Quaternion.identity);
+        // Creation du visuel de l'agent
+        this.agentGridWorld.visual = Instantiate(agentPrefab, new Vector3(gridParameter.startState.x, gridParameter.startState.y, 0.0f), Quaternion.identity);
+        
+        // Lancement du Reinforcement Learning
         if (algo == GridWorld_Algo.POLICY_ITERATION)
-        {
-            StartCoroutine(UpdateWorld());
-        }
+            StartCoroutine(UpdateWorldWithPolicyIteration());
         else
-        {
             this.agentGridWorld.ValueIteration(ref grid);
-        }
+        
 
     }
 
+    // Permet de positionner correctement les obstacles lorsqu'on génère la map
     private bool ThereIsAnOtherObstacleSoClose(Vector2Int idx)
     {
         for (int i = idx.x - 1; i <= idx.x + 1; i++)
@@ -244,14 +247,23 @@ public class GridWorld : MonoBehaviour
         return false;
     }
 
-    private IEnumerator UpdateWorld()
+    // Permet d'update l'agent s'il est en mode Policy Iteration
+    private IEnumerator UpdateWorldWithPolicyIteration()
     {
         int ite = 0;
-        while (ite <= 100)
+        
+        // On met un nombre d'iteration pour sécuriser afin de ne pas rentrer en infinity loop
+        while (ite <= 10000)
         {
-            this.agentGridWorld.PolicyImprovement(ref grid);
-            //UpdateGridState(default);
+            // Policy Imporvement renvoie True quand la policy optimal est trouvé !
+            bool stable = this.agentGridWorld.PolicyImprovement(ref grid);
+
+            if (stable)
+                break;
+            
+            // On va perform le policy improvement tout les StepTime
             yield return new WaitForSeconds(stepTime);
+            
             ite++;
             Debug.Log(ite);
         }
@@ -260,13 +272,5 @@ public class GridWorld : MonoBehaviour
         yield break;
     }
 
-    public void UpdateGridState(Vector2Int newAgentState)
-    {
-        // Update de la position de l'agent
-
-        // Update des bonus si r�colt�
-
-        // End de la simulation si agent == target
-    }
 }
 

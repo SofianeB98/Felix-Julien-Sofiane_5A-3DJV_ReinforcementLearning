@@ -36,21 +36,28 @@ namespace Sokoban
 
         void Start()
         {
+            //On cree les differentes actions du jeu
             this.actions = new List<IAction>();
             actions.Add(moveUp);
             actions.Add(moveDown);
             actions.Add(moveLeft);
             actions.Add(moveRight);
 
+            //On load le level (pour cree un level suffit de placer des prefab dans une scene, le load level se charge du reste)
             var grid = LoadLevel();
             this.gameState = new SokobanGameState(grid.Item1, grid.Item2, actions);
 
+            //On initialise l'agent + training
             agent.Init(ref gameState, ref actions, selectedAlgo, alpha, gamma, episodeCount, useOnPolicy, epsilonGreedy,
                 theta, maxIteration);
 
+            //Puis on fait jouer l'agent
             StartCoroutine(PlayWithIA());
         }
 
+        //Permet de faire jouer l'agent
+        //Cocher "player can control" dans l'inspector permet que le joueur joue
+        //et met l'agent en pause
         private IEnumerator PlayWithIA()
         {
             int iteration = 0;

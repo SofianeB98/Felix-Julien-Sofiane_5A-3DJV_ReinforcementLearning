@@ -157,7 +157,7 @@ MonoBehaviour:
   Circle: {fileID: 2800000, guid: 74074fd34e9b43e4bae4fe099efe3466, type: 3}
   tilePrefab: {fileID: 1061754290737683173, guid: 47e70dff4db064c4bb75d1e6f5f83e05, type: 3}
   episodeCount: 1000
-  epsilonGreedy: 0.3
+  epsilonGreedy: 0.7
   useFirstVisit: 0
   useOnPolicy: 0
   winR: 1

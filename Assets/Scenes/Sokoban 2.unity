@@ -1839,14 +1839,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e8d0021b920a1a4f8940c5b9fbc566c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerCanControl: 0
+  playerCanControl: 1
   selectedAlgo: 4
-  maxIteration: 1000
+  maxIteration: 300
   episodeCount: 50
-  epsilonGreedy: 0.5
-  gamma: 0.902
-  alpha: 0.2
-  theta: 0.006
+  epsilonGreedy: 0.4
+  gamma: 0.9
+  alpha: 0.4
+  theta: 0.005
   useOnPolicy: 0
 --- !u!4 &509858141
 Transform:

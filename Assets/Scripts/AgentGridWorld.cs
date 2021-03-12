@@ -10,32 +10,29 @@ public class AgentGridWorld
     public Texture rightArrow;
     public Texture leftArrow;
 
+    //Stock toutes les actions possible pour chaque case de la map
     public Dictionary<Vector2Int, List<Action>> actions;
+    //Stock les meilleures actions pour un state donne
     public Dictionary<Vector2Int, Action> policy;
-
-    public Vector2Int actualState;
-    public Vector2Int targetState;
+    
 
     public GameObject visual;
 
     public float gamma = 0.9f;
     public float theta = 0.005f;
 
-    public float reward = 0.0f;
-
+    //Initialise l'agent
     public void Init(Dictionary<Vector2Int, List<Action>> availableActions, Vector2Int startState, Vector2Int targetState, float gamma = 0.9f, float theta = 0.005f)
     {
-        reward = 0.0f;
         this.gamma = gamma;
         this.actions = availableActions;
-        this.actualState = startState;
-        this.targetState = targetState;
 
         this.theta = theta;
 
         InitializeRandomPolicy();
     }
 
+    //Lance le remplissage random de la policy, elle se mettra a jour lorsque l'agent apprendra
     public void InitializeRandomPolicy()
     {
         //On initiase la policy avec du RDM
@@ -49,11 +46,13 @@ public class AgentGridWorld
         }
     }
 
+    // Fonction de Policy Evaluation qui evalue la fonction de valeur
     public void PolicyEvaluation(ref GridCell[,] allStates)
     {
         float delta = theta + 1;
         int iteration = 0;
-        while (delta > theta && iteration < 1)
+        //Fonction appelé plusieurs fois dans une coroutine afin de voir l'amélioration progressive de la policy
+        while (delta > theta && iteration < 100000000)
         {
             delta = 0.0f;
             iteration++;
@@ -80,10 +79,12 @@ public class AgentGridWorld
             }
         }
 
+        // Display les action actuelle de la policy
         DisplayDirection(ref allStates);
     }
 
-    public void PolicyImprovement(ref GridCell[,] allStates)
+    // Met a jour la policy
+    public bool PolicyImprovement(ref GridCell[,] allStates)
     {
         bool policyStable = true;
         for (int i = 0; i < allStates.GetLength(0); i++)
@@ -122,9 +123,11 @@ public class AgentGridWorld
         {
             Debug.LogError("Policy Stable");
         }
+
+        return policyStable;
     }
-
-
+    
+    // Lance le training par value iteration
     public void ValueIteration(ref GridCell[,] allStates)
     {
         float delta = theta + 1;
@@ -161,8 +164,6 @@ public class AgentGridWorld
                 }
             }
         }
-
-        //TODO : Update la policy a la fin !
 
         string val = "";
         for (int j = allStates.GetLength(1) - 1; j >= 0; j--)

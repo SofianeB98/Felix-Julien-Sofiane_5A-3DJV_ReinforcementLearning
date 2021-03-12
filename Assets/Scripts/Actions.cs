@@ -31,9 +31,9 @@ public class MoveAction : Action
 
     public override void Perform(AgentGridWorld agentGridWorld, GridParameter gridParams, GridWorld env) 
     {
-        var newPos = agentGridWorld.actualState + direction;
-        if (OutOfGridBound(newPos, ref gridParams))
-            return;
-        agentGridWorld.actualState = newPos;
+        // var newPos = agentGridWorld.actualState + direction;
+        // if (OutOfGridBound(newPos, ref gridParams))
+        //     return;
+        // agentGridWorld.actualState = newPos;
     }
 }
